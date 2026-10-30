@@ -2,14 +2,14 @@ import Phaser from "phaser";
 
 interface ButtonConfig {
 
-    x: number
-    y: number
+    x?: number
+    y?: number
     width: number
     height: number
 
     text: string
     fontFamily?: string
-    fontSize?: string
+    fontSize?: number
     textColor?: string
 
     backgroundColor?: number
@@ -17,6 +17,10 @@ interface ButtonConfig {
     radius?: number
     borderColor?: number
     borderRadius?: number
+    borderWidth?: number
+    borderAlpha?: number
+
+    click?: () => void
 
 }
 
@@ -24,27 +28,40 @@ export default class Button extends Phaser.GameObjects.Container {
 
     constructor (scene: Phaser.Scene, config: ButtonConfig) {
 
-        let x = config.x
-        let y = config.y
+        let x = config.x ?? 0
+        let y = config.y ?? 0
         let width = config.width
         let height = config.height
 
         let text = config.text
         let fontFamily = config.fontFamily ?? "Rubik"
-        let fontSize = config.fontSize ?? "20px"
+        let fontSize = config.fontSize ?? 20
         let textColor = config.textColor ?? "#FFFFFF"
 
-        let backgroundColor = config.backgroundColor ?? 0xFFFFFF
+        let backgroundColor = config.backgroundColor ?? 0x000000
         let backgroundAlpha = config.backgroundAlpha ?? 1
-        let radius = config.radius ?? 8
+        let radius = config.radius ?? 12
         let borderColor = config.borderColor ?? 0xFFFFFF
-        let borderRadius = config.borderRadius ?? 0
+        let borderAlpha = config.borderAlpha ?? 1
+        let borderWidth = config.borderWidth ?? 0
+
+        let click = config.click
 
         super (scene, x, y )
 
         let background = scene.add.graphics()
+
         background.fillStyle(backgroundColor, backgroundAlpha)
         background.fillRoundedRect(
+            -width / 2, 
+            -height / 2,
+            width,
+            height,
+            radius
+        )
+
+        background.lineStyle(borderWidth, borderColor, borderAlpha)
+        background.strokeRoundedRect(
             -width / 2, 
             -height / 2,
             width,
@@ -60,8 +77,28 @@ export default class Button extends Phaser.GameObjects.Container {
         
         this.add([background, label])
 
+        this.setInteractive(new Phaser.Geom.Rectangle (
+            -width / 2, 
+            -height / 2,
+            width,
+            height,
+        ), Phaser.Geom.Rectangle.Contains)
+
+        this.on("pointerover", () => {
+            scene.input.setDefaultCursor("pointer");
+        });
+
+        this.on("pointerout", () => {
+            scene.input.setDefaultCursor("default");
+        });
+
+        this.on("pointerdown", () => {
+            click?.()
+        })
+
         scene.add.existing(this)
     
     }
+    
 
 }
