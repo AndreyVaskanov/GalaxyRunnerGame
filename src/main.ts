@@ -3,13 +3,12 @@ import MainMenu from './scenes/MainMenu';
 import './style.css';
 
 const config: Phaser.Types.Core.GameConfig = {
-
     type: Phaser.AUTO,
 
-    width: 1280,
-    height: 720,
+    width: 1920,
+    height: 1080,
 
-    parent: 'app',
+    parent: "app",
     backgroundColor: '#080D17',
 
     scale: {
