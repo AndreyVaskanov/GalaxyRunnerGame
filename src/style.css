@@ -7,3 +7,13 @@
 body {
     background: #778ebb;
 }
+
+@font-face {
+  font-family: 'Rubik';
+  src: url("./fonts/Rubik/Rubik-VariableFont_wght.ttf");
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url("./fonts/Press_Start_2P/PressStart2P-Regular.ttf");
+}
