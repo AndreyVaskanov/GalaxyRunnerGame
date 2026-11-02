@@ -6,12 +6,6 @@ import './style.css';
 import BaseGameScene from './scenes/gameScenes/BaseGameScene';
 
 const config: Phaser.Types.Core.GameConfig = {
-    type: Phaser.AUTO,
-
-    width: 1920,
-    height: 1080,
-
-    parent: "app",
 
     plugins: {
         scene: [
@@ -21,6 +15,24 @@ const config: Phaser.Types.Core.GameConfig = {
                 mapping: "rexUI"
             }
         ]
+    },
+
+    parent: "app",
+
+    type: Phaser.AUTO,
+
+    width: 1920,
+    height: 1080,
+
+    physics: {
+        default: "arcade",
+        arcade: {
+            gravity: {
+                x: 0,
+                y: 1800
+            },
+            debug: true
+        }
     },
 
     backgroundColor: '#080D17',

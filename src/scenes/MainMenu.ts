@@ -14,7 +14,7 @@ export default class MainMenu extends Phaser.Scene {
         //Отрисовка звезд
         const starsDrawer = this.add.graphics();
         starsDrawer.fillStyle(0xFFFFFF, 1)
-        for (let i = 0; i < 300; i++) {
+        for (let i = 0; i < 100; i++) {
             const x = Phaser.Math.Between(0,1920)
             const y = Phaser.Math.Between(0,1080)
             const size = Phaser.Math.FloatBetween(0,1) < 0.7 ? 1 : 2
@@ -30,7 +30,7 @@ export default class MainMenu extends Phaser.Scene {
         fontSize: 30,
         text: "Играть",
         textColor: "#080D17",
-        fontFamily: "'Press Start 2P'",
+        fontFamily: "Rubik",
         backgroundColor: 0xF2C94C,
         click: () => this.scene.start("BaseGameScene")
         })
