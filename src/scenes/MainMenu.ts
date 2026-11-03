@@ -32,8 +32,11 @@ export default class MainMenu extends Phaser.Scene {
         textColor: "#080D17",
         fontFamily: "Rubik",
         backgroundColor: 0xF2C94C,
-        click: () => this.scene.start("BaseGameScene")
-        })
+        click: () => {
+            this.scene.start("Desert1")
+            this.input.setDefaultCursor("default");
+            this.scene.stop("MainMenu")
+        }})
 
         let buttonHowToPlay = new Button(this, {
             y: 130,
@@ -43,8 +46,10 @@ export default class MainMenu extends Phaser.Scene {
             text: "Как играть",
             backgroundAlpha: 0,
             borderWidth: 2,
-            click: () => this.scene.start("ChapterMap")
-        })
+            click: () => {
+                this.scene.start("ChapterMap")
+                this.scene.stop("MainMenu")
+        }})
 
         let buttonShop = new Button(this, {
             y: 260,
