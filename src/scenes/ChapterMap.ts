@@ -23,8 +23,10 @@ export default class ChapterMap extends Phaser.Scene {
             text: "Назад в меню",
             fontSize: 30,
             backgroundColor: 0xFF00FF,
-            click: () => this.scene.start("MainMenu")
-        })
+            click: () => {
+                this.scene.start("MainMenu")
+                this.scene.stop("ChapterMap")
+        }})
     }
 
 }

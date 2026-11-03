@@ -1,14 +1,19 @@
 import Phaser from "phaser";
-import Ground from "../../gameObjects/Ground";
-import Hero from "../../gameObjects/Hero";
+import Ground from "../gameObjects/Ground";
+import Hero from "../gameObjects/Hero";
+import type { SceneConfig } from "../interface/SceneConfig";
+import Platform from "../gameObjects/Platform";
 
-export default class BaseGameScene extends Phaser.Scene {
+export default class GameScene extends Phaser.Scene {
 
     private hero!: Hero
     private keys!: Record<string, Phaser.Input.Keyboard.Key>
 
-    constructor() {
-        super("BaseGameScene") 
+    private config: SceneConfig
+
+    constructor(key: string, config: SceneConfig) {
+        super(key) 
+        this.config = config
     }
 
     preload(): void {
@@ -17,17 +22,22 @@ export default class BaseGameScene extends Phaser.Scene {
 
     create() : void {
     
-        this.cameras.main.setBackgroundColor(0xffc17a)
+        this.cameras.main.setBackgroundColor(this.config.backgroundColor)
 
         const topic = this.add.rectangle(0, 0, 1920, 90, 0x080D17, 0.8)
         topic.setOrigin(0)
 
-        const ground = new Ground(this, 0xa86b00, 0x754a00)
-        this.hero = new Hero(this, 500, 500)
+        const ground = new Ground(this, this.config.groundColor, this.config.groundBorderColor)
+        this.hero = new Hero(this, this.config.heroX, this.config.heroY)
 
         this.physics.add.collider(ground, this.hero.getBody())
 
         this.keys = this.input.keyboard!.addKeys("A,D,W,SPACE") as Record<string, Phaser.Input.Keyboard.Key>
+
+        for (const platformConfig of this.config.platforms) {
+            let platform = new Platform(this, platformConfig)
+            this.physics.add.collider(this.hero.getBody(), platform)
+        }
 
     }
 
@@ -45,7 +55,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.hero.setSpeedX(speedX)
 
         if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.W)) {
-            this.hero.jump(800)
+            this.hero.jump(850)
         }
     }
 
