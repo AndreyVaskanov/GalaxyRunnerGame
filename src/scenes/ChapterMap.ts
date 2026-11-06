@@ -15,7 +15,7 @@ export default class ChapterMap extends Phaser.Scene {
         header.setOrigin(0.5)
         header.setFontSize(30)
         
-        let btnBack = new Button(this, {
+        new Button(this, {
             x:960,
             y:540,
             width: 300,
