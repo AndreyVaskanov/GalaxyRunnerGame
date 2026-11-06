@@ -51,7 +51,7 @@ async function startGame() {
     await document.fonts.load("20px Rubik")
     await document.fonts.load("20px 'Press Start 2P'")
 
-    new Phaser.Game(config)
+    const game = new Phaser.Game(config)
 }
 
 startGame()
