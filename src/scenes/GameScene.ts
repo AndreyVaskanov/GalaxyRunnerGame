@@ -41,7 +41,7 @@ export default class GameScene extends Phaser.Scene {
 
     }
 
-    update(time: number, delta: number): void {
+    update(): void {
 
         let speedX = 0
 
