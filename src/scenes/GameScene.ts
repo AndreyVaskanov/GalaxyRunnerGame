@@ -3,6 +3,7 @@ import Ground from "../gameObjects/Ground";
 import Hero from "../gameObjects/Hero";
 import type { SceneConfig } from "../interface/SceneConfig";
 import Platform from "../gameObjects/Platform";
+import hero from "/src/assets/hero.png"
 
 export default class GameScene extends Phaser.Scene {
 
@@ -17,7 +18,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image("hero", "/src/assets/hero.png");
+        this.load.image("hero", hero);
     }
 
     create() : void {
