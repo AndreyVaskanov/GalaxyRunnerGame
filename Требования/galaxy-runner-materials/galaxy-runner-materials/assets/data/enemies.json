@@ -1,0 +1,104 @@
+{
+ "enemies": {
+  "legionnaire": {
+   "name": "Легионер",
+   "hits": 1,
+   "points": 200,
+   "attack": "выстрел вперёд",
+   "episodes": [
+    1,
+    3
+   ],
+   "sprite": "enemy_legionnaire.png"
+  },
+  "sand_beetle": {
+   "name": "Песчаный жук",
+   "hits": 1,
+   "points": 150,
+   "attack": "сгусток песка вперёд",
+   "episodes": [
+    1
+   ],
+   "sprite": "enemy_sand_beetle.png"
+  },
+  "shooter": {
+   "name": "Стрелок",
+   "hits": 2,
+   "points": 250,
+   "attack": "выстрел раз в 2 с",
+   "episodes": [
+    2,
+    3
+   ],
+   "sprite": "enemy_shooter.png"
+  },
+  "scout_drone": {
+   "name": "Дрон-разведчик",
+   "hits": 1,
+   "points": 200,
+   "attack": "выстрел вниз",
+   "episodes": [
+    3
+   ],
+   "flying": true,
+   "sprite": "enemy_scout_drone.png"
+  },
+  "snow_legionnaire": {
+   "name": "Снежный легионер",
+   "hits": 2,
+   "points": 250,
+   "attack": "ледяной заряд вперёд",
+   "episodes": [
+    2
+   ],
+   "sprite": "enemy_snow_legionnaire.png"
+  },
+  "heavy_walker": {
+   "name": "Тяжёлый шагоход",
+   "hits": 3,
+   "points": 400,
+   "attack": "залп из пушки",
+   "episodes": [
+    2
+   ],
+   "sprite": "enemy_heavy_walker.png"
+  },
+  "dark_guard": {
+   "name": "Тёмный гвардеец",
+   "hits": 3,
+   "points": 400,
+   "attack": "заряд из посоха",
+   "episodes": [
+    3
+   ],
+   "sprite": "enemy_dark_guard.png"
+  },
+  "rust_drone": {
+   "name": "Ржавый дрон",
+   "hits": 1,
+   "points": 150,
+   "attack": "выстрел вниз",
+   "episodes": [
+    4
+   ],
+   "flying": true,
+   "sprite": "enemy_rust_drone.png"
+  },
+  "junk_crab": {
+   "name": "Мусорный краб",
+   "hits": 2,
+   "points": 300,
+   "attack": "выстрел из клешни",
+   "episodes": [
+    4
+   ],
+   "sprite": "enemy_junk_crab.png"
+  }
+ },
+ "defeatBy": [
+  "выстрел (F / ЛКМ)",
+  "прыжок на голову = 1 удар"
+ ],
+ "enemyHitPlayer": "-1 сердце",
+ "source": "FR-SWR-2-5-1, FR-SWR-2-8-1, FR-SWR-2-2-1, FR-SWR-2-12-1, UR-3-1"
+}

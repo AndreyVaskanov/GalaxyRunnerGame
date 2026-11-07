@@ -1,0 +1,78 @@
+{
+ "heroes": {
+  "kai": {
+   "name": "Кай Вэйл",
+   "sprite": "hero_kai_sheet.png",
+   "speed": 3,
+   "jump": 3,
+   "attack": 4,
+   "damage": 2,
+   "price": 0,
+   "unlock": "start"
+  },
+  "nova": {
+   "name": "Нова Рэйн",
+   "sprite": "hero_nova_sheet.png",
+   "speed": 5,
+   "jump": 3,
+   "attack": 2,
+   "damage": 1,
+   "price": 35,
+   "unlock": "shop"
+  },
+  "taron": {
+   "name": "Тарон",
+   "sprite": "hero_taron_sheet.png",
+   "speed": 4,
+   "jump": 4,
+   "attack": 5,
+   "damage": 3,
+   "price": 40,
+   "unlock": "after_episode_3_shop"
+  }
+ },
+ "rules": {
+  "speedPxPerSec": {
+   "1": 120,
+   "2": 160,
+   "3": 200,
+   "4": 240,
+   "5": 280
+  },
+  "jumpHeightPx": {
+   "1": 80,
+   "2": 100,
+   "3": 120,
+   "4": 140,
+   "5": 160
+  },
+  "damageByAttack": {
+   "1": 1,
+   "2": 1,
+   "3": 2,
+   "4": 2,
+   "5": 3
+  },
+  "blaster": {
+   "rangePx": 400,
+   "speedPxPerSec": 600
+  },
+  "runAnimation": {
+   "frames": 4,
+   "fps": 8
+  },
+  "sheetFrames": [
+   "idle",
+   "run1",
+   "run2",
+   "run3",
+   "run4",
+   "jump"
+  ],
+  "frameSize": [
+   12,
+   16
+  ]
+ },
+ "source": "FR-SWR-2-1-1, FR-SWR-2-2-1, FR-SWR-2-3-1, FR-SWR-2-10-1, FR-SWR-1-8-1"
+}

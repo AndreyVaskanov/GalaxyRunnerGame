@@ -4,13 +4,15 @@ import Hero from "../gameObjects/Hero";
 import type { SceneConfig } from "../interface/SceneConfig";
 import Platform from "../gameObjects/Platform";
 import hero from "/src/assets/hero.png"
+import GameManager from "../managers/GameManager";
+import { GameState } from "../managers/GameManager";
 
-export default class GameScene extends Phaser.Scene {
+export default abstract class GameScene extends Phaser.Scene {
 
     private hero!: Hero
     private keys!: Record<string, Phaser.Input.Keyboard.Key>
-
     private config: SceneConfig
+    private gameManager!: GameManager
 
     constructor(key: string, config: SceneConfig) {
         super(key) 
@@ -22,6 +24,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() : void {
+
+        this.gameManager = new GameManager()
     
         this.cameras.main.setBackgroundColor(this.config.backgroundColor)
 
@@ -33,7 +37,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.physics.add.collider(ground, this.hero.getBody())
 
-        this.keys = this.input.keyboard!.addKeys("A,D,W,SPACE") as Record<string, Phaser.Input.Keyboard.Key>
+        this.keys = this.input.keyboard!.addKeys("A,D,W,SPACE,ESC") as Record<string, Phaser.Input.Keyboard.Key>
 
         for (const platformConfig of this.config.platforms) {
             let platform = new Platform(this, platformConfig)
@@ -43,6 +47,27 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(): void {
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+
+            if (this.gameManager.getState() == GameState.Play) {
+
+                this.gameManager.pause()
+
+            } else if (this.gameManager.getState() == GameState.Pause) {
+
+                this.gameManager.resume()
+            }
+        }
+
+        if (this.gameManager.getState() !== GameState.Play) {
+            this.physics.pause()
+            return
+        }
+
+        if (this.physics.world.isPaused) {
+            this.physics.resume()
+        }
 
         let speedX = 0
 

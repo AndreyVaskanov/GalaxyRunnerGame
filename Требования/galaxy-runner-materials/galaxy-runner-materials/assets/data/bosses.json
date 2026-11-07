@@ -1,0 +1,51 @@
+{
+ "bosses": {
+  "sand_worm": {
+   "name": "Песчаный червь",
+   "episode": 1,
+   "hp": 100,
+   "hits": 14,
+   "scale": 16,
+   "weakSpot": "голова, пока над песком 3 с",
+   "phase2": "с половины здоровья плюётся камнями",
+   "sprite": "boss_sand_worm.png"
+  },
+  "walking_tank": {
+   "name": "Шагающий танк",
+   "episode": 2,
+   "hp": 100,
+   "hits": 14,
+   "scale": 14,
+   "weakSpot": "ноги",
+   "phase2": "после 7 попаданий садится и стреляет ракетами вверх",
+   "sprite": "boss_walking_tank.png"
+  },
+  "lord_varx": {
+   "name": "Тёмный лорд Варкс",
+   "episode": 3,
+   "hp": 100,
+   "hits": 16,
+   "scale": 10,
+   "weakSpot": "сразу после замаха",
+   "phase2": "толчок Силы отбрасывает героя",
+   "sprite": "boss_lord_varx.png"
+  },
+  "scrap_golem": {
+   "name": "Скрап-голем",
+   "episode": 4,
+   "hp": 100,
+   "hits": 18,
+   "scale": 14,
+   "weakSpot": "светящееся ядро в груди",
+   "phase2": "бросает обломки, зовёт ржавых дронов",
+   "heroOnly": "taron",
+   "sprite": "boss_scrap_golem.png"
+  }
+ },
+ "reward": {
+  "points": 1000,
+  "crystals": 10
+ },
+ "bossHitPlayer": "-0.5 сердца",
+ "source": "FR-SWR-2-6-1, FR-SWR-2-12-1"
+}

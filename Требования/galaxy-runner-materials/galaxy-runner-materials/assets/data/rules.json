@@ -1,0 +1,24 @@
+{
+ "crystal": {
+  "points": 100,
+  "perLevel": 15,
+  "bossBonus": 10,
+  "gameLimit": 100,
+  "hudFormat": "X / 100"
+ },
+ "stars": {
+  "1": "победить босса",
+  "2": "собрать все 15 кристаллов уровня",
+  "3": "набрать очки эпизода"
+ },
+ "starScore": {
+  "1": 9500,
+  "2": 10750,
+  "3": 10750,
+  "4": 13000
+ },
+ "noDamageBonus": 500,
+ "lives": 3,
+ "hudScoreFormat": "000000",
+ "source": "FR-SWR-2-4-1, FR-SWR-2-8-1, FR-SWR-2-9-1, FR-SWR-2-12-1"
+}

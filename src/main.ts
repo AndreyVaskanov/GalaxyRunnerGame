@@ -3,7 +3,6 @@ import UIPlugin from 'phaser4-rex-plugins/templates/ui/ui-plugin'
 import MainMenu from './scenes/MainMenu';
 import ChapterMap from './scenes/ChapterMap';
 import './style.css';
-import GameScene from './scenes/GameScene';
 import Desert1 from './scenes/gameScenes/Desert1';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -43,7 +42,7 @@ const config: Phaser.Types.Core.GameConfig = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
 
-    scene: [MainMenu, ChapterMap, GameScene, Desert1]
+    scene: [MainMenu, ChapterMap, Desert1]
 };
 
 async function startGame() {
