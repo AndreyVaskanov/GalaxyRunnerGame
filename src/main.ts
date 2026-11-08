@@ -3,6 +3,7 @@ import UIPlugin from 'phaser4-rex-plugins/templates/ui/ui-plugin'
 import MainMenu from './scenes/MainMenu';
 import ChapterMap from './scenes/ChapterMap';
 import './style.css';
+import SceneManager from './managers/SceneManager';
 import Desert1 from './scenes/gameScenes/Desert1';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -20,6 +21,10 @@ const config: Phaser.Types.Core.GameConfig = {
     parent: "app",
 
     type: Phaser.AUTO,
+
+    callbacks: {
+        preBoot: (game: Phaser.Game) => SceneManager.initialize(game.scene)
+    },
 
     width: 1920,
     height: 1080,

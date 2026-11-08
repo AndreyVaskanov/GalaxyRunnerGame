@@ -6,6 +6,7 @@ import Platform from "../gameObjects/Platform";
 import hero from "/src/assets/hero.png"
 import GameManager from "../managers/GameManager";
 import { GameState } from "../managers/GameManager";
+import SceneManager from "../managers/SceneManager";
 
 export default abstract class GameScene extends Phaser.Scene {
 
@@ -26,6 +27,9 @@ export default abstract class GameScene extends Phaser.Scene {
     create() : void {
 
         this.gameManager = new GameManager()
+
+        SceneManager.setGameManager (this.gameManager)
+        this.events.once (Phaser.Scenes.Events.SHUTDOWN, () => {SceneManager.setGameManager(null)})
     
         this.cameras.main.setBackgroundColor(this.config.backgroundColor)
 
@@ -52,11 +56,11 @@ export default abstract class GameScene extends Phaser.Scene {
 
             if (this.gameManager.getState() == GameState.Play) {
 
-                this.gameManager.pause()
+                SceneManager.pauseGame()
 
             } else if (this.gameManager.getState() == GameState.Pause) {
 
-                this.gameManager.resume()
+                SceneManager.resumeGame()
             }
         }
 

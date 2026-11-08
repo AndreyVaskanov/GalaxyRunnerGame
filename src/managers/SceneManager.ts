@@ -1,18 +1,35 @@
-/*
 import Phaser from "phaser";
 import GameManager from "./GameManager";
 
 export default class SceneManager {
 
-    private sceneManager: Phaser.Scenes.SceneManager
-    private gameManager: GameManager | null = null
+    private static sceneManager: Phaser.Scenes.SceneManager
+    private static gameManager: GameManager | null = null
 
-    constructor(sceneManager: Phaser.Scenes.SceneManager) {
-        this.sceneManager = sceneManager
+    public static initialize (sceneManager: Phaser.Scenes.SceneManager) {
+        SceneManager.sceneManager = sceneManager
     }
 
-    public setGameManager(gameManager: GameManager) {
-        this.gameManager = gameManager
+    public static setGameManager(gameManager: GameManager | null) {
+        SceneManager.gameManager = gameManager
     }
+
+    public static getSceneManager(): Phaser.Scenes.SceneManager {
+        return SceneManager.sceneManager;
+    }
+
+    public static pauseGame() {
+        if (this.gameManager === null) {
+            return
+        } 
+        this.gameManager.pause()
+    }
+
+    public static resumeGame() {
+        if(this.gameManager === null) {
+            return
+        }
+        this.gameManager.resume()
+    }
+
 }
-*/
