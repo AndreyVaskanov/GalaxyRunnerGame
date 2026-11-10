@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist"
   },
+  
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "typescript": "~7.0.2",
