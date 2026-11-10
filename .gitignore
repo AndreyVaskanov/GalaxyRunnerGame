@@ -25,7 +25,8 @@ node_modules
 *.sln
 *.sw?
 
-/CONTINUATION.md
+/PROJECT_CONTEXT.md
 /ARCHITECTURE.md
+
 /Требования/
 /tests/

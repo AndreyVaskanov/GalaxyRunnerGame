@@ -12,6 +12,18 @@ export default class MainMenu extends Phaser.Scene {
 
         this.cameras.main.setBackgroundColor("#080D17")
 
+        if (SceneManager.canContinueGame()) {
+            new Button(this, {
+                x: 1660, y: 65, width: 390, height: 60,
+                text: "Продолжить прохождение →", fontSize: 24,
+                textColor: "#F2C94C", backgroundAlpha: 0, borderWidth: 1,
+                click: () => {
+                    this.input.setDefaultCursor("default");
+                    SceneManager.continueGame(this.scene.key);
+                }
+            });
+        }
+
         //Отрисовка звезд
         const starsDrawer = this.add.graphics();
         starsDrawer.fillStyle(0xFFFFFF, 1)

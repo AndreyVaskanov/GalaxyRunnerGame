@@ -44,6 +44,7 @@ export default class PlayerController {
     }
 
     public getHealth(): number { return this.health; }
+    public getCharacterId(): string { return this.character.id; }
     public moveTo(x: number, y: number): void { this.getBody().reset(x, y); }
     public setActive(active: boolean): void { this.active = active; }
 

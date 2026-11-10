@@ -85,7 +85,7 @@ export default class CharacterSelect extends Phaser.Scene {
             fontSize: 27, backgroundColor: 0xf2c94c, textColor: "#000000",
             click: () => {
                 this.input.setDefaultCursor("default");
-                SceneManager.showScene(this.scene.key, "Desert1");
+                SceneManager.showScene(this.scene.key, "ChapterMap");
             }
         });
     }

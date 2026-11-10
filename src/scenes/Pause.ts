@@ -64,6 +64,13 @@ export default class Pause extends Phaser.Scene {
         };
         slider("Музыка", "musicVolume", cy - 22.5);
         slider("Звуки", "effectsVolume", cy + 82.5);
+        if (SceneManager.canRestoreCheckpoint()) {
+            new Button(this, {
+                x: cx, y: cy + 187.5, width: 450, height: 50, text: "Вернуться к чекпоинту",
+                fontSize: 23, textColor: "#5FD3FF", backgroundAlpha: 0,
+                click: act(() => SceneManager.restoreCheckpoint())
+            });
+        }
         new Button(this, {
             x: cx, y: cy + 270, width: 450, height: 75, radius: 12,
             text: "Выйти на карту эпизодов", fontSize: 25, backgroundAlpha: 0,

@@ -5,8 +5,13 @@ import ChapterMap from './scenes/ChapterMap';
 import './style.css';
 import SceneManager from './managers/SceneManager';
 import Desert1 from './scenes/gameScenes/Desert1';
+import Ice2 from './scenes/gameScenes/Ice2';
+import Station3 from './scenes/gameScenes/Station3';
+import Junk4 from './scenes/gameScenes/Junk4';
 import Pause from './scenes/Pause';
 import CharacterSelect from './scenes/CharacterSelect';
+import EpisodeComplete from './scenes/EpisodeComplete';
+import GameOver from './scenes/GameOver';
 import { initializeServices } from './AppServices';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -54,7 +59,7 @@ const config: Phaser.Types.Core.GameConfig = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
 
-    scene: [MainMenu, ChapterMap, CharacterSelect, Desert1, Pause]
+    scene: [MainMenu, ChapterMap, CharacterSelect, Desert1, Ice2, Station3, Junk4, Pause, EpisodeComplete, GameOver]
 };
 
 async function startGame() {
