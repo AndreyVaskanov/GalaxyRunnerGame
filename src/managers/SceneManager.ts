@@ -7,6 +7,7 @@ import { getEpisode } from "../levels/EpisodeCatalog";
 import type { EpisodeMapEntry } from "../interface/EpisodeMapEntry";
 import bosses from "../data/bosses.json";
 import rules from "../data/rules.json";
+import type { ControlBinding } from "../config/Controls";
 
 const episodeScenes = ["Desert1", "Ice2", "Station3", "Junk4"];
 const locations: Record<string, string> = {
@@ -93,7 +94,7 @@ export default class SceneManager {
                 heroAllowed: !episode.heroOnly || episode.heroOnly === hero.id,
                 requiredHeroName: episode.heroOnly ? getHero(episode.heroOnly).name : null,
                 canContinue: attempt?.episodeId === episode.episode && attempt.heroId === hero.id,
-                crystalCount: episode.crystalsTotal,
+                crystalCount: episode.crystalsTotal + bosses.reward.crystals,
                 starScore: rules.starScore[String(episode.episode) as keyof typeof rules.starScore]
             };
         });
@@ -139,13 +140,22 @@ export default class SceneManager {
 
     public static getSettings(): GameSettings { return appServices.settings.getSettings(); }
     public static updateSettings(settings: GameSettings): boolean { return appServices.settings.update(settings); }
+    public static resetSettings(): boolean { return appServices.settings.reset(); }
+    public static assignKey(binding: ControlBinding, key: string, swap = false) { return appServices.settings.assignKey(binding, key, swap); }
+    public static getTotalScore(): number { return appServices.progress.getTotalScore(); }
     public static getProgress() { return appServices.progress.getProgress(); }
+    public static getEpisodeScore(episodeId: number): number { return appServices.progress.getEpisodeScore(episodeId); }
     public static getCharacters() { return appServices.characters.getCharacters(); }
     public static getCharacterCatalog() { return appServices.characters.getCatalog(); }
     public static getSelectedCharacter() { return appServices.characters.getSelectedCharacter(); }
     public static isCharacterOwned(id: string): boolean { return appServices.characters.isOwned(id); }
     public static selectCharacter(id: string): boolean { return appServices.characters.select(id); }
     public static canBuyCharacter(character: CharacterDefinition): boolean { return appServices.characters.canBuy(character); }
+    public static purchaseCharacter(id: string) { return appServices.characters.purchase(id); }
+    public static showShop(from: string): void {
+        SceneManager.sceneManager.stop(from);
+        SceneManager.sceneManager.start("Shop", { returnTo: from });
+    }
 
     public static pauseGame(): void {
         const game = SceneManager.gameManager;

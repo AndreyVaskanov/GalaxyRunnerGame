@@ -2,8 +2,8 @@
  "enemies": {
   "legionnaire": {
    "name": "Легионер",
-   "hits": 1,
-   "points": 200,
+   "hp": 2,
+   "points": 600,
    "attack": "выстрел вперёд",
    "episodes": [
     1,
@@ -13,8 +13,8 @@
   },
   "sand_beetle": {
    "name": "Песчаный жук",
-   "hits": 1,
-   "points": 150,
+   "hp": 2,
+   "points": 450,
    "attack": "сгусток песка вперёд",
    "episodes": [
     1
@@ -23,8 +23,8 @@
   },
   "shooter": {
    "name": "Стрелок",
-   "hits": 2,
-   "points": 250,
+   "hp": 3,
+   "points": 750,
    "attack": "выстрел раз в 2 с",
    "episodes": [
     2,
@@ -34,8 +34,8 @@
   },
   "scout_drone": {
    "name": "Дрон-разведчик",
-   "hits": 1,
-   "points": 200,
+   "hp": 2,
+   "points": 600,
    "attack": "выстрел вниз",
    "episodes": [
     3
@@ -45,8 +45,8 @@
   },
   "snow_legionnaire": {
    "name": "Снежный легионер",
-   "hits": 2,
-   "points": 250,
+   "hp": 3,
+   "points": 750,
    "attack": "ледяной заряд вперёд",
    "episodes": [
     2
@@ -55,8 +55,8 @@
   },
   "heavy_walker": {
    "name": "Тяжёлый шагоход",
-   "hits": 3,
-   "points": 400,
+   "hp": 4,
+   "points": 1200,
    "attack": "залп из пушки",
    "episodes": [
     2
@@ -65,8 +65,8 @@
   },
   "dark_guard": {
    "name": "Тёмный гвардеец",
-   "hits": 3,
-   "points": 400,
+   "hp": 4,
+   "points": 1200,
    "attack": "заряд из посоха",
    "episodes": [
     3
@@ -75,8 +75,8 @@
   },
   "rust_drone": {
    "name": "Ржавый дрон",
-   "hits": 1,
-   "points": 150,
+   "hp": 1,
+   "points": 450,
    "attack": "выстрел вниз",
    "episodes": [
     4
@@ -86,8 +86,8 @@
   },
   "junk_crab": {
    "name": "Мусорный краб",
-   "hits": 2,
-   "points": 300,
+   "hp": 3,
+   "points": 900,
    "attack": "выстрел из клешни",
    "episodes": [
     4

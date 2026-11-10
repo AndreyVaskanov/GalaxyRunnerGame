@@ -1,13 +1,14 @@
 import type Phaser from "phaser";
 import Ground from "../gameObjects/Ground";
 import Platform from "../gameObjects/Platform";
+import Laser from "../gameObjects/Laser";
 import type { CheckpointData } from "../interface/GameData";
-import type { LevelEvent } from "../interface/RunData";
+import type { BossSnapshot, EnemySnapshot, LevelEvent } from "../interface/RunData";
 import { crystalId, checkpointId } from "../levels/LevelObjectIds";
 import type EnemyManager from "./EnemyManager";
 import { getEpisode, getEpisodeScreen, LEVEL_SCALE } from "../levels/EpisodeCatalog";
 import { getBackgroundUrl, backgroundKey, preloadLevelObjects } from "../levels/EpisodeAssets";
-import { ENABLE_TECHNICAL_FINISH } from "../config/Development";
+import { preloadEnemies } from "../enemies/EnemyAssets";
 
 export interface LevelSelection {
     episodeId: number;
@@ -31,7 +32,7 @@ export default class LevelManager {
     private checkpoint: CheckpointData | null = null;
     private pickups: Phaser.GameObjects.Image[] = [];
     private events: LevelEvent[] = [];
-    private technicalFinishObjects: Phaser.GameObjects.GameObject[] = [];
+    private lasers: Laser[] = [];
 
     constructor(scene: Phaser.Scene, enemies: EnemyManager) {
         this.scene = scene;
@@ -43,6 +44,7 @@ export default class LevelManager {
         const key = backgroundKey(episodeId);
         if (!scene.textures.exists(key)) scene.load.image(key, getBackgroundUrl(episode.background));
         preloadLevelObjects(scene);
+        preloadEnemies(scene, episodeId);
     }
 
     public getSpawnPoint(episodeId: number, screenIndex = 0): { x: number; y: number } {
@@ -52,7 +54,8 @@ export default class LevelManager {
     }
 
     public loadLevel(episodeId: number, screenIndex: number, playerBody: Phaser.Physics.Arcade.Body,
-        collectedIds: string[] = [], activeCheckpointId: string | null = null): void {
+        collectedIds: string[] = [], activeCheckpointId: string | null = null,
+        enemyStates: EnemySnapshot[] = [], defeatedIds: string[] = [], bossState: BossSnapshot | null = null): void {
         const { episode, screen } = getEpisodeScreen(episodeId, screenIndex);
         const colors = terrainColors[episode.biome];
         if (!colors) throw new Error(`Неизвестная локация ${episode.biome}`);
@@ -79,6 +82,16 @@ export default class LevelManager {
             }));
         }
         for (const object of this.objects) this.colliders.push(this.scene.physics.add.collider(playerBody, object));
+        for (const obstacle of screen.obstacles) {
+            if (obstacle.type !== "laser") continue;
+            const laser = new Laser(this.scene, obstacle.x * LEVEL_SCALE, obstacle.y * LEVEL_SCALE,
+                obstacle.w * LEVEL_SCALE, obstacle.h * LEVEL_SCALE, obstacle.toggleSec ?? 3);
+            this.lasers.push(laser);
+            this.colliders.push(this.scene.physics.add.collider(playerBody, laser.top));
+            this.colliders.push(this.scene.physics.add.overlap(playerBody, laser.beam, () => {
+                if (laser.isActive()) this.events.push({ type: "hazardHit", damage: 1 });
+            }));
+        }
         const collected = new Set(collectedIds);
         screen.crystals.forEach((point, index) => {
             const id = crystalId(episodeId, screenIndex, index);
@@ -113,38 +126,13 @@ export default class LevelManager {
                 this.events.push({ type: "checkpoint", id, position });
             }));
         }
-        if (ENABLE_TECHNICAL_FINISH && screenIndex === episode.screens.length - 1) {
-            this.createTechnicalFinish(width, groundY, playerBody);
-        }
-        // Враги, препятствия и босс подключаются отдельными этапами.
-        this.enemies.createEnemies([]);
-    }
-
-    // TODO: удалить вместе с ENABLE_TECHNICAL_FINISH, когда заработают боссы.
-    private createTechnicalFinish(width: number, groundY: number, playerBody: Phaser.Physics.Arcade.Body): void {
-        const x = width - 180;
-        const gate = this.scene.add.rectangle(x, groundY - 105, 100, 210, 0xff00cc, 0.18)
-            .setStrokeStyle(4, 0xff00cc);
-        this.scene.physics.add.existing(gate, true);
-        const stripes = this.scene.add.graphics().lineStyle(5, 0xff00cc, 0.8);
-        for (let offset = 0; offset < 210; offset += 24) {
-            stripes.lineBetween(x - 48, groundY - offset, x - 26, groundY - offset - 16);
-            stripes.lineBetween(x + 26, groundY - offset, x + 48, groundY - offset - 16);
-        }
-        const label = this.scene.add.text(x, groundY - 240, "DEV / ВРЕМЕННЫЙ ФИНИШ\nЗАМЕНА БОССА · УДАЛИТЬ", {
-            fontFamily: "monospace", fontSize: "20px", color: "#FF66E5", align: "center",
-            backgroundColor: "#20031D", padding: { x: 12, y: 8 }
-        }).setOrigin(0.5, 1);
-        this.technicalFinishObjects.push(gate, stripes, label);
-        let activated = false;
-        this.colliders.push(this.scene.physics.add.overlap(playerBody, gate, () => {
-            if (activated) return;
-            activated = true;
-            this.events.push({ type: "technicalFinish" });
-        }));
+        this.enemies.createEnemies(screen.enemies, episodeId, screenIndex, playerBody, this.objects, enemyStates, defeatedIds);
+        if (screen.bossSpawn) this.enemies.createBoss(episode.boss, screen.bossSpawn.x * LEVEL_SCALE, groundY, width, bossState);
     }
 
     public getSelection(): LevelSelection | null { return this.selection ? { ...this.selection } : null; }
+
+    public update(delta: number): void { for (const laser of this.lasers) laser.update(delta); }
 
     public hasNextScreen(): boolean {
         return this.selection !== null
@@ -166,16 +154,16 @@ export default class LevelManager {
         const events = this.events;
         this.events = [];
         // Сбор предметов того же физического шага должен войти в снимок чекпоинта.
-        const order = { crystal: 0, checkpoint: 1, technicalFinish: 2 };
+        const order = { hazardHit: 0, crystal: 1, checkpoint: 2 };
         return events.sort((a, b) => order[a.type] - order[b.type]);
     }
 
     public clear(): void {
         for (const collider of this.colliders) collider.destroy();
+        for (const laser of this.lasers) laser.destroy();
+        this.lasers = [];
         for (const object of this.objects) object.destroy();
         for (const pickup of this.pickups) pickup.destroy();
-        for (const object of this.technicalFinishObjects) object.destroy();
-        this.technicalFinishObjects = [];
         this.pickups = [];
         this.events = [];
         this.background?.destroy();

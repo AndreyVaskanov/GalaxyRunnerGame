@@ -5,3 +5,7 @@ export function crystalId(episodeId: number, screenIndex: number, index: number)
 export function checkpointId(episodeId: number, screenIndex: number): string {
     return `${episodeId}:${screenIndex}:checkpoint`;
 }
+
+export function enemyId(episodeId: number, screenIndex: number, index: number): string {
+    return `${episodeId}:${screenIndex}:enemy:${index}`;
+}

@@ -69,19 +69,26 @@ export default class CharacterSelect extends Phaser.Scene {
             }).setOrigin(0.5);
             const graphics = this.add.graphics();
             frames.push({ id: hero.id, graphics, x, y });
-            if (owned) {
-                const hitArea = this.add.zone(x, y, 375, 525).setInteractive({ useHandCursor: true });
-                hitArea.on("pointerdown", () => choose(hero));
-            }
+            const hitArea = this.add.zone(x, y, 375, 525).setInteractive({ useHandCursor: owned });
+            hitArea.on("pointerdown", () => {
+                if (owned) choose(hero);
+                else status.setText("Герой ещё не приобретён. Откройте магазин отдельной кнопкой вверху.");
+            });
         });
         redraw();
         new Button(this, {
-            x: 190, y: 65, width: 280, height: 55, text: "← Главное меню", fontSize: 24,
-            textColor: "#A8A8A8", backgroundAlpha: 0,
-            click: () => { this.input.setDefaultCursor("default"); SceneManager.showScene(this.scene.key, "MainMenu"); }
+            x: this.scale.width - 250, y: 70, width: 400, height: 64,
+            text: `Магазин · ◆ ${SceneManager.getProgress().crystals}`, fontSize: 24,
+            textColor: "#080D17", backgroundColor: 0xf2c94c, borderWidth: 2, borderColor: 0xf2c94c,
+            click: () => { this.input.setDefaultCursor("default"); SceneManager.showShop(this.scene.key); }
         });
         new Button(this, {
-            x: this.scale.width - 240, y: 970, width: 330, height: 75, text: "Выбрать →",
+            x: 190, y: 65, width: 300, height: 55, variant: "back", text: "← Карта эпизодов", fontSize: 24,
+            textColor: "#A8A8A8", backgroundAlpha: 0,
+            click: () => { this.input.setDefaultCursor("default"); SceneManager.showScene(this.scene.key, "ChapterMap"); }
+        });
+        new Button(this, {
+            x: this.scale.width - 240, y: 970, width: 330, height: 75, text: "Готово →",
             fontSize: 27, backgroundColor: 0xf2c94c, textColor: "#000000",
             click: () => {
                 this.input.setDefaultCursor("default");

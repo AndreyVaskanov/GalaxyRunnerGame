@@ -10,17 +10,24 @@ export default class Pause extends Phaser.Scene {
         const { width, height } = this.scale;
         const cx = width / 2;
         const cy = height / 2;
-        const binding = SceneManager.getSettings().keys.pause;
+        const bindings = SceneManager.getSettings().keys;
+        const pauseBindings = [...new Set([bindings.pause, bindings.pauseAlternative].filter(binding => binding && binding !== "MOUSE_LEFT"))];
         const keyboard = this.input.keyboard!;
-        const pauseKey = keyboard.addKey(binding);
-        const pauseEvent = `keydown-${binding}`;
+        const pauseKeys = pauseBindings.map(binding => keyboard.addKey(binding));
+        const pauseEvents = pauseBindings.map(binding => `keydown-${binding}`);
         const resume = (event: KeyboardEvent) => {
             if (event.repeat) return;
             // Одно нажатие не должно снова открыть игровую паузу после resume.
             event.stopPropagation();
             SceneManager.resumeGame();
         };
-        keyboard.on(pauseEvent, resume);
+        for (const event of pauseEvents) keyboard.on(event, resume);
+        const mousePause = (pointer: Phaser.Input.Pointer) => {
+            if (pointer.leftButtonDown() && pointer.worldY > 90 && [bindings.pause, bindings.pauseAlternative].includes("MOUSE_LEFT")) {
+                SceneManager.resumeGame();
+            }
+        };
+        this.input.on("pointerdown", mousePause);
 
         // Отдельная UI-сцена продолжает работать, пока игровой уровень на паузе.
         this.add.rectangle(cx, cy, width, height, 0x000000, 0.7).setInteractive();
@@ -78,8 +85,9 @@ export default class Pause extends Phaser.Scene {
         });
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-            keyboard.off(pauseEvent, resume);
-            keyboard.removeKey(pauseKey, true);
+            this.input.off("pointerdown", mousePause);
+            for (const event of pauseEvents) keyboard.off(event, resume);
+            for (const key of pauseKeys) keyboard.removeKey(key, true);
             this.input.setDefaultCursor("default");
         });
     }

@@ -7,6 +7,7 @@ export default class GameHud {
     private readonly health: Phaser.GameObjects.Text;
     private readonly crystals: Phaser.GameObjects.Text;
     private readonly score: Phaser.GameObjects.Text;
+    private readonly totalScore: Phaser.GameObjects.Text;
     private readonly episode: Phaser.GameObjects.Text;
     private readonly message: Phaser.GameObjects.Text;
     private readonly exitGlow: Phaser.GameObjects.Graphics;
@@ -22,8 +23,9 @@ export default class GameHud {
         this.health = scene.add.text(80, 45, "", style).setOrigin(0, 0.5).setDepth(101);
         scene.add.image(175, 45, "crystal").setDisplaySize(30, 42).setDepth(101);
         this.crystals = scene.add.text(210, 45, "", { ...style, color: "#5FD3FF" }).setOrigin(0, 0.5).setDepth(101);
-        this.score = scene.add.text(840, 45, "", style).setOrigin(0.5).setDepth(101);
-        scene.add.text(1080, 45, heroName, { ...style, color: "#5FD3FF" }).setOrigin(0, 0.5).setDepth(101);
+        this.score = scene.add.text(675, 45, "", style).setOrigin(0.5).setDepth(101);
+        this.totalScore = scene.add.text(1005, 45, "", { ...style, fontSize: "24px", color: "#A8A8A8" }).setOrigin(0.5).setDepth(101);
+        scene.add.text(1200, 45, heroName, { ...style, fontSize: "27px", color: "#5FD3FF" }).setOrigin(0, 0.5).setDepth(101);
         this.episode = scene.add.text(1725, 45, "", { ...style, fontSize: "24px", color: "#A8A8A8" })
             .setOrigin(1, 0.5).setDepth(101);
         new Button(scene, {
@@ -48,7 +50,8 @@ export default class GameHud {
         if (!data) return;
         this.health.setText(String(data.health));
         this.crystals.setText(`${data.crystals} / ${rules.crystal.gameLimit}`);
-        this.score.setText(`Очки: ${String(data.score).padStart(6, "0")}`);
+        this.score.setText(`За эпизод: ${String(data.score).padStart(6, "0")}`);
+        this.totalScore.setText(`Всего: ${String(data.totalScore).padStart(6, "0")}`);
         this.episode.setText(`Эпизод ${["I", "II", "III", "IV"][data.episodeId - 1]}`);
         this.message.setText(data.message).setVisible(data.message.length > 0);
         this.exitGlow.setVisible(data.screenIndex < 2);

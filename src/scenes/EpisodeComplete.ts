@@ -23,13 +23,10 @@ export default class EpisodeComplete extends Phaser.Scene {
             callback();
         };
         new Button(this, {
-            x: 210, y: 65, width: 330, height: 55, text: "← Главное меню", fontSize: 24,
+            x: 210, y: 65, width: 330, height: 55, variant: "back", text: "← Главное меню", fontSize: 24,
             backgroundAlpha: 0, textColor: "#A8A8A8",
             click: act(() => SceneManager.showScene(this.scene.key, "MainMenu"))
         });
-        if (result.technicalFinish) this.add.text(960, 130, "DEV · ТЕХНИЧЕСКИЙ ФИНИШ ВМЕСТО БОССА", {
-            fontFamily: "monospace", fontSize: "24px", color: "#FF66E5"
-        }).setOrigin(0.5);
         this.add.text(960, 240, result.nextEpisodeId ? "ЭПИЗОД ПРОЙДЕН!" : "ИГРА ПРОЙДЕНА!", {
             fontFamily: "'Press Start 2P'", fontSize: "63px", color: "#F2C94C"
         }).setOrigin(0.5);

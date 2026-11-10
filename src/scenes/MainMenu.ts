@@ -14,9 +14,9 @@ export default class MainMenu extends Phaser.Scene {
 
         if (SceneManager.canContinueGame()) {
             new Button(this, {
-                x: 1660, y: 65, width: 390, height: 60,
+                x: 1645, y: 75, width: 420, height: 72,
                 text: "Продолжить прохождение →", fontSize: 24,
-                textColor: "#F2C94C", backgroundAlpha: 0, borderWidth: 1,
+                textColor: "#F2C94C", backgroundColor: 0x141e2e, borderWidth: 2, borderColor: 0x88773e,
                 click: () => {
                     this.input.setDefaultCursor("default");
                     SceneManager.continueGame(this.scene.key);
@@ -47,7 +47,7 @@ export default class MainMenu extends Phaser.Scene {
         backgroundColor: 0xF2C94C,
         click: () => {
             this.input.setDefaultCursor("default");
-            SceneManager.showScene(this.scene.key, "CharacterSelect")
+            SceneManager.showScene(this.scene.key, "ChapterMap")
         }})
 
         let buttonHowToPlay = new Button(this, {
@@ -59,7 +59,8 @@ export default class MainMenu extends Phaser.Scene {
             backgroundAlpha: 0,
             borderWidth: 2,
             click: () => {
-                SceneManager.showScene(this.scene.key, "ChapterMap")
+                this.input.setDefaultCursor("default");
+                SceneManager.showScene(this.scene.key, "HowToPlay")
         }})
 
         let buttonShop = new Button(this, {
@@ -69,7 +70,11 @@ export default class MainMenu extends Phaser.Scene {
             fontSize: 27,
             text: "Магазин",
             backgroundAlpha: 0,
-            borderWidth: 2
+            borderWidth: 2,
+            click: () => {
+                this.input.setDefaultCursor("default");
+                SceneManager.showShop(this.scene.key);
+            }
         })
 
         let buttonSettings = new Button(this, {
@@ -80,7 +85,11 @@ export default class MainMenu extends Phaser.Scene {
             fontSize: 27,
             text: "Настройки",
             backgroundAlpha: 0,
-            borderWidth: 2
+            borderWidth: 2,
+            click: () => {
+                this.input.setDefaultCursor("default");
+                SceneManager.showScene(this.scene.key, "Settings");
+            }
         })
 
         let buttonContainer = this.add.container(960, 500)

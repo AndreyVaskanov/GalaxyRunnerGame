@@ -27,17 +27,17 @@ export default class ChapterMap extends Phaser.Scene {
             SceneManager.showScene(this.scene.key, key);
         };
         new Button(this, {
-            x: 190, y: 55, width: 285, height: 48, text: "← Главное меню", fontSize: 24,
+            x: 190, y: 55, width: 285, height: 48, variant: "back", text: "← Главное меню", fontSize: 24,
             backgroundAlpha: 0, textColor: yellow, click: () => leave("MainMenu")
         });
         new Button(this, {
-            x: 190, y: 112, width: 285, height: 48, text: "← Сменить героя", fontSize: 24,
+            x: 190, y: 112, width: 285, height: 48, variant: "back", text: "← Сменить героя", fontSize: 24,
             backgroundAlpha: 0, textColor: "#A8A8A8", click: () => leave("CharacterSelect")
         });
         this.add.text(960, 90, "КАРТА ЭПИЗОДОВ", {
             fontFamily: "'Press Start 2P'", fontSize: "54px", color: yellow
         }).setOrigin(0.5);
-        this.add.text(1830, 65, `Очки: ${SceneManager.getProgress().score.toLocaleString("ru-RU")}`, {
+        const score = this.add.text(1830, 65, "", {
             ...textStyle, fontSize: "30px"
         }).setOrigin(1, 0.5);
 
@@ -64,13 +64,14 @@ export default class ChapterMap extends Phaser.Scene {
         let restartButton: Button | null = null;
 
         const drawSelection = () => {
+            score.setText(`Всего очков: ${SceneManager.getTotalScore().toLocaleString("ru-RU")}`);
             selection.clear().lineStyle(2, 0xf2c94c, 0.5);
             selection.strokeCircle(positions.get(selected.id)!, 385, 104);
             const numeral = numerals[selected.id - 1];
             conditions.setText([
                 `Эпизод ${numeral} «${selected.name}» — условия звёзд`,
                 `★  Победить босса (${selected.bossName})`,
-                `★★  Собрать все кристаллы уровня: ${selected.crystalCount} из ${selected.crystalCount}`,
+                `★★  Кристаллы: ${selected.crystalCount} из ${selected.crystalCount} (включая награду босса)`,
                 `★★★  Набрать ${selected.starScore.toLocaleString("ru-RU")} очков за эпизод`
             ]);
             hero.setText(`Герой: ${SceneManager.getSelectedCharacter().name}`);

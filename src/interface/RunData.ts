@@ -15,6 +15,25 @@ export interface RunSnapshot extends RunTotals {
     position: RunPosition;
     collectedIds: string[];
     checkpointId: string;
+    health?: number;
+    defeatedIds?: string[];
+    enemies?: EnemySnapshot[];
+    boss?: BossSnapshot | null;
+}
+
+export interface BossSnapshot {
+    type: string;
+    hp: number;
+    x: number;
+    y: number;
+}
+
+export interface EnemySnapshot {
+    id: string;
+    hp: number;
+    x: number;
+    y: number;
+    facing: "left" | "right";
 }
 
 export interface AttemptData {
@@ -24,12 +43,17 @@ export interface AttemptData {
     collectedIds: string[];
     checkpoint: RunSnapshot | null;
     resume: RunPosition;
+    health?: number;
+    defeatedIds?: string[];
+    enemies?: EnemySnapshot[];
+    damaged?: boolean;
+    boss?: BossSnapshot | null;
 }
 
 export type LevelEvent =
+    | { type: "hazardHit"; damage: number }
     | { type: "crystal"; id: string }
-    | { type: "checkpoint"; id: string; position: RunPosition }
-    | { type: "technicalFinish" };
+    | { type: "checkpoint"; id: string; position: RunPosition };
 
 export interface EpisodeResult {
     episodeId: number;
@@ -39,13 +63,13 @@ export interface EpisodeResult {
     stars: number;
     bestScore: number;
     nextEpisodeId: number | null;
-    technicalFinish: boolean;
     saved: boolean;
 }
 
 export interface HudData {
     health: number;
     score: number;
+    totalScore: number;
     crystals: number;
     episodeId: number;
     screenIndex: number;

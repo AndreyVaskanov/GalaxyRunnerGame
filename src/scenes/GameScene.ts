@@ -33,30 +33,38 @@ export default abstract class GameScene extends Phaser.Scene {
     }
 
     create(): void {
-        const enemies = new EnemyManager();
+        const enemies = new EnemyManager(this);
         const player = new PlayerController(this, appServices.settings, enemies, this.character);
         const levels = new LevelManager(this, enemies);
         this.gameManager = new GameManager(levels, player, enemies, appServices.progress, appServices.audio);
         SceneManager.setGameManager(this.gameManager, this.scene.key);
         this.gameManager.startLevel(this.episodeId, 0, this.continueSaved);
 
-        const pauseBinding = appServices.settings.getSettings().keys.pause;
+        const bindings = appServices.settings.getSettings().keys;
+        const pauseBindings = [...new Set([bindings.pause, bindings.pauseAlternative].filter(binding => binding && binding !== "MOUSE_LEFT"))];
         const keyboard = this.input.keyboard!;
-        const pauseKey = keyboard.addKey(pauseBinding);
-        const pauseEvent = `keydown-${pauseBinding}`;
+        const pauseKeys = pauseBindings.map(binding => keyboard.addKey(binding));
+        const pauseEvents = pauseBindings.map(binding => `keydown-${binding}`);
         const pause = (event: KeyboardEvent) => {
             if (event.repeat) return;
             event.stopPropagation();
             SceneManager.pauseGame();
         };
-        keyboard.on(pauseEvent, pause);
+        for (const event of pauseEvents) keyboard.on(event, pause);
+        const mousePause = (pointer: Phaser.Input.Pointer) => {
+            if (pointer.leftButtonDown() && pointer.worldY > 90 && [bindings.pause, bindings.pauseAlternative].includes("MOUSE_LEFT")) {
+                SceneManager.pauseGame();
+            }
+        };
+        this.input.on("pointerdown", mousePause);
         this.hud = new GameHud(this, this.character.name);
         const save = () => { this.gameManager.saveSession(); };
         window.addEventListener("pagehide", save);
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-            keyboard.off(pauseEvent, pause);
-            keyboard.removeKey(pauseKey, true);
+            this.input.off("pointerdown", mousePause);
+            for (const event of pauseEvents) keyboard.off(event, pause);
+            for (const key of pauseKeys) keyboard.removeKey(key, true);
             window.removeEventListener("pagehide", save);
             SceneManager.setGameManager(null);
             this.gameManager.destroy();

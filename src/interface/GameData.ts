@@ -1,7 +1,8 @@
 export interface GameSettings {
     musicVolume: number;
     effectsVolume: number;
-    keys: { left: string; right: string; jump: string; jumpAlternative: string; pause: string };
+    keys: { left: string; leftAlternative: string; right: string; rightAlternative: string;
+        jump: string; jumpAlternative: string; attack: string; attackAlternative: string; pause: string; pauseAlternative: string };
 }
 
 export interface ProgressData {

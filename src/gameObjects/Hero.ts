@@ -36,6 +36,9 @@ export default class Hero {
         if (speed !== 0) this.sprite.setFlipX(speed < 0);
     }
 
+    getFacing(): number { return this.sprite.flipX ? -1 : 1; }
+    setInvulnerable(value: boolean): void { this.sprite.setAlpha(value ? 0.55 : 1); }
+
     updateAnimation(): void {
         if (!this.body.onFloor() || this.body.velocity.y !== 0) {
             this.sprite.anims.stop();
