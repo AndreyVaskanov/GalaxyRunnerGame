@@ -26,3 +26,5 @@ node_modules
 *.sw?
 
 /CONTINUATION.md
+/ARCHITECTURE.md
+/Требования/

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Button from "../ui/Button";
+import SceneManager from "../managers/SceneManager";
 
 export default class MainMenu extends Phaser.Scene {
 
@@ -33,9 +34,8 @@ export default class MainMenu extends Phaser.Scene {
         fontFamily: "Rubik",
         backgroundColor: 0xF2C94C,
         click: () => {
-            this.scene.start("Desert1")
             this.input.setDefaultCursor("default");
-            this.scene.stop("MainMenu")
+            SceneManager.showScene(this.scene.key, "CharacterSelect")
         }})
 
         let buttonHowToPlay = new Button(this, {
@@ -47,8 +47,7 @@ export default class MainMenu extends Phaser.Scene {
             backgroundAlpha: 0,
             borderWidth: 2,
             click: () => {
-                this.scene.start("ChapterMap")
-                this.scene.stop("MainMenu")
+                SceneManager.showScene(this.scene.key, "ChapterMap")
         }})
 
         let buttonShop = new Button(this, {

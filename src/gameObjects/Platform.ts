@@ -39,4 +39,9 @@ export default class Platform extends Phaser.GameObjects.Rectangle {
 
         this.border.setOrigin(0)
     }
+
+    destroy(fromScene?: boolean): void {
+        this.border?.destroy(fromScene)
+        super.destroy(fromScene)
+    }
 }

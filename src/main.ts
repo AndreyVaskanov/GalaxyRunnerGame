@@ -5,6 +5,9 @@ import ChapterMap from './scenes/ChapterMap';
 import './style.css';
 import SceneManager from './managers/SceneManager';
 import Desert1 from './scenes/gameScenes/Desert1';
+import Pause from './scenes/Pause';
+import CharacterSelect from './scenes/CharacterSelect';
+import { initializeServices } from './AppServices';
 
 const config: Phaser.Types.Core.GameConfig = {
 
@@ -21,9 +24,13 @@ const config: Phaser.Types.Core.GameConfig = {
     parent: "app",
 
     type: Phaser.AUTO,
+    pixelArt: true,
 
     callbacks: {
-        preBoot: (game: Phaser.Game) => SceneManager.initialize(game.scene)
+        preBoot: (game: Phaser.Game) => {
+            initializeServices(game);
+            SceneManager.initialize(game.scene);
+        }
     },
 
     width: 1920,
@@ -47,7 +54,7 @@ const config: Phaser.Types.Core.GameConfig = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
 
-    scene: [MainMenu, ChapterMap, Desert1]
+    scene: [MainMenu, ChapterMap, CharacterSelect, Desert1, Pause]
 };
 
 async function startGame() {

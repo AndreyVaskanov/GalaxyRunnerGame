@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Button from "../ui/Button";
+import SceneManager from "../managers/SceneManager";
 
 export default class ChapterMap extends Phaser.Scene {
 
@@ -24,8 +25,7 @@ export default class ChapterMap extends Phaser.Scene {
             fontSize: 30,
             backgroundColor: 0xFF00FF,
             click: () => {
-                this.scene.start("MainMenu")
-                this.scene.stop("ChapterMap")
+                SceneManager.showScene(this.scene.key, "MainMenu")
         }})
     }
 

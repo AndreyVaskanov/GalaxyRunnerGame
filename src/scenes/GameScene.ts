@@ -1,92 +1,61 @@
 import Phaser from "phaser";
-import Ground from "../gameObjects/Ground";
-import Hero from "../gameObjects/Hero";
-import type { SceneConfig } from "../interface/SceneConfig";
-import Platform from "../gameObjects/Platform";
-import hero from "/src/assets/hero.png"
-import GameManager from "../managers/GameManager";
-import { GameState } from "../managers/GameManager";
+import GameManager, { GameState } from "../managers/GameManager";
 import SceneManager from "../managers/SceneManager";
+import LevelManager from "../managers/LevelManager";
+import EnemyManager from "../managers/EnemyManager";
+import PlayerController from "../controllers/PlayerController";
+import { appServices } from "../AppServices";
+import { preloadHero } from "../characters/CharacterAssets";
 
 export default abstract class GameScene extends Phaser.Scene {
+    private readonly episodeId: number;
+    private gameManager!: GameManager;
 
-    private hero!: Hero
-    private keys!: Record<string, Phaser.Input.Keyboard.Key>
-    private config: SceneConfig
-    private gameManager!: GameManager
-
-    constructor(key: string, config: SceneConfig) {
-        super(key) 
-        this.config = config
+    constructor(key: string, episodeId: number) {
+        super(key);
+        this.episodeId = episodeId;
     }
 
     preload(): void {
-        this.load.image("hero", hero);
+        const character = SceneManager.getSelectedCharacter();
+        preloadHero(this, character.id, character.sprite);
+        LevelManager.preloadEpisode(this, this.episodeId);
     }
 
-    create() : void {
+    create(): void {
+        const enemies = new EnemyManager();
+        const player = new PlayerController(this, appServices.settings, enemies, SceneManager.getSelectedCharacter());
+        const levels = new LevelManager(this, enemies);
+        this.gameManager = new GameManager(levels, player, enemies, appServices.progress, appServices.audio);
+        SceneManager.setGameManager(this.gameManager, this.scene.key);
+        this.gameManager.startLevel(this.episodeId);
 
-        this.gameManager = new GameManager()
+        const pauseBinding = appServices.settings.getSettings().keys.pause;
+        const keyboard = this.input.keyboard!;
+        const pauseKey = keyboard.addKey(pauseBinding);
+        const pauseEvent = `keydown-${pauseBinding}`;
+        const pause = (event: KeyboardEvent) => {
+            if (event.repeat) return;
+            event.stopPropagation();
+            SceneManager.pauseGame();
+        };
+        keyboard.on(pauseEvent, pause);
+        this.add.rectangle(0, 0, 1920, 90, 0x080D17, 0.8).setOrigin(0);
 
-        SceneManager.setGameManager (this.gameManager)
-        this.events.once (Phaser.Scenes.Events.SHUTDOWN, () => {SceneManager.setGameManager(null)})
-    
-        this.cameras.main.setBackgroundColor(this.config.backgroundColor)
-
-        const topic = this.add.rectangle(0, 0, 1920, 90, 0x080D17, 0.8)
-        topic.setOrigin(0)
-
-        const ground = new Ground(this, this.config.groundColor, this.config.groundBorderColor)
-        this.hero = new Hero(this, this.config.heroX, this.config.heroY)
-
-        this.physics.add.collider(ground, this.hero.getBody())
-
-        this.keys = this.input.keyboard!.addKeys("A,D,W,SPACE,ESC") as Record<string, Phaser.Input.Keyboard.Key>
-
-        for (const platformConfig of this.config.platforms) {
-            let platform = new Platform(this, platformConfig)
-            this.physics.add.collider(this.hero.getBody(), platform)
-        }
-
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            keyboard.off(pauseEvent, pause);
+            keyboard.removeKey(pauseKey, true);
+            SceneManager.setGameManager(null);
+            this.gameManager.destroy();
+        });
     }
 
-    update(): void {
-
-        if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
-
-            if (this.gameManager.getState() == GameState.Play) {
-
-                SceneManager.pauseGame()
-
-            } else if (this.gameManager.getState() == GameState.Pause) {
-
-                SceneManager.resumeGame()
-            }
-        }
-
+    update(_time: number, delta: number): void {
+        this.gameManager.update(delta);
         if (this.gameManager.getState() !== GameState.Play) {
-            this.physics.pause()
-            return
+            if (!this.physics.world.isPaused) this.physics.pause();
+            return;
         }
-
-        if (this.physics.world.isPaused) {
-            this.physics.resume()
-        }
-
-        let speedX = 0
-
-        if (this.keys.A.isDown){
-            speedX -= 300
-        }
-        if (this.keys.D.isDown) {
-            speedX += 300
-        }
-
-        this.hero.setSpeedX(speedX)
-
-        if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.W)) {
-            this.hero.jump(850)
-        }
+        if (this.physics.world.isPaused) this.physics.resume();
     }
-
 }
