@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("каталог героев", () => {
-    it("содержит Кая и возвращает независимую копию каталога", () => {
+    it("[UR-2-1, FR-SWR-1-2-1] содержит Кая и возвращает независимую копию каталога", () => {
         expect(hasHero("kai")).toBe(true);
         expect(hasHero("not-a-hero")).toBe(false);
 
@@ -40,7 +40,7 @@ describe("каталог героев", () => {
         expect(getHero("kai").name).not.toBe("изменённое имя");
     });
 
-    it("считает положительные параметры движения и отклоняет неизвестного героя", () => {
+    it("[FR-SWR-2-1-1, FR-SWR-2-2-1] проверяет параметры движения и неизвестного героя", () => {
         const movement = getHeroMovement(getHero("kai"));
         expect(movement.speed).toBeGreaterThan(0);
         expect(movement.jumpHeight).toBeGreaterThan(0);
@@ -49,20 +49,20 @@ describe("каталог героев", () => {
 });
 
 describe("каталог уровней", () => {
-    it("проверяет загруженный эпизод и не отдаёт изменяемые исходные данные", () => {
+    it("[FR-SWR-1-3-1] проверяет конфигурацию эпизода и неизменность исходных данных", () => {
         const episode = getEpisode(1);
         expect(validateEpisode(episode)).toBe(true);
         episode.screens[0].crystals.pop();
         expect(getEpisode(1).screens[0].crystals.length).toBeGreaterThan(episode.screens[0].crystals.length);
     });
 
-    it("отклоняет неизвестный номер эпизода", () => {
+    it("[FR-SWR-1-3-1] отклоняет неизвестный номер эпизода", () => {
         expect(() => getEpisode(99)).toThrow("Некорректная конфигурация эпизода");
     });
 });
 
 describe("сохранение попытки", () => {
-    it("засчитывает кристалл только один раз и восстанавливает попытку из сохранения", () => {
+    it("[FR-SWR-2-4-1, FR-SWR-2-7-1, NFR-SWR-2-6-1] собирает кристалл один раз и восстанавливает попытку", () => {
         const saves = new SaveSystem();
         const progress = new ProgressSystem(saves);
         progress.load();
@@ -85,7 +85,7 @@ describe("сохранение попытки", () => {
         });
     });
 
-    it("не начинает попытку с закрытым эпизодом или неизвестным героем", () => {
+    it("[UR-2-1, UR-2-2] отклоняет закрытый эпизод и неизвестного героя", () => {
         const progress = new ProgressSystem(new SaveSystem());
         progress.load();
         expect(() => progress.beginAttempt(2, "kai", { screenIndex: 0, x: 0, y: 0 })).toThrow("Недопустимые параметры");
