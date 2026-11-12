@@ -45,8 +45,7 @@ export default class Enemy {
     public update(delta: number, player: Phaser.Physics.Arcade.Body): number[][] {
         this.clock += delta;
         this.cooldown -= delta;
-        this.flash = Math.max(0, this.flash - delta);
-        if (!this.flash) this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+        this.updateVisuals(delta);
         const body = this.body;
         if (body.blocked.left || this.sprite.x <= this.left) this.facing = 1;
         if (body.blocked.right || this.sprite.x >= this.right) this.facing = -1;
@@ -55,11 +54,6 @@ export default class Enemy {
         body.setVelocityX(speed * this.facing);
         if (this.isFlying()) body.setVelocityY(Math.cos(this.clock / 600) * 30 * GAME_SCALE + (this.anchorY - this.sprite.y) * 0.5);
         this.sprite.setFlipX(this.facing < 0);
-        this.bar.clear();
-        if (this.hp < this.definition.hp) {
-            this.bar.fillStyle(0x080d17).fillRect(body.left, body.top - 15, body.width, 7);
-            this.bar.fillStyle(0xd64545).fillRect(body.left, body.top - 15, body.width * this.hp / this.definition.hp, 7);
-        }
         const dx = player.center.x - body.center.x;
         const dy = player.center.y - body.center.y;
         if (this.cooldown > 0 || Math.abs(dx) > 600 * GAME_SCALE) return [];
@@ -73,6 +67,22 @@ export default class Enemy {
         this.facing = dx < 0 ? -1 : 1;
         const vx = 280 * GAME_SCALE * this.facing;
         return type === "heavy_walker" ? [[vx, -70], [vx, 0], [vx, 70]] : [[vx, type === "sand_beetle" ? -90 : 0]];
+    }
+
+    public getShotOrigin(vx: number, _vy: number): { x: number; y: number } {
+        return { x: this.body.center.x + Math.sign(vx) * (this.body.halfWidth + 12),
+            y: this.body.center.y + (this.isFlying() ? this.body.halfHeight + 12 : 0) };
+    }
+
+    protected updateVisuals(delta: number): void {
+        this.flash = Math.max(0, this.flash - delta);
+        if (!this.flash) this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+        const body = this.body;
+        this.bar.clear();
+        if (this.hp < this.definition.hp) {
+            this.bar.fillStyle(0x080d17).fillRect(body.left, body.top - 15, body.width, 7);
+            this.bar.fillStyle(0xd64545).fillRect(body.left, body.top - 15, body.width * this.hp / this.definition.hp, 7);
+        }
     }
 
     public takeDamage(amount: number): void {

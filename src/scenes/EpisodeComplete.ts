@@ -31,7 +31,7 @@ export default class EpisodeComplete extends Phaser.Scene {
             fontFamily: "'Press Start 2P'", fontSize: "63px", color: "#F2C94C"
         }).setOrigin(0.5);
         this.add.text(960, 330, episode.name, { ...style, fontSize: "33px", color: "#A8A8A8" }).setOrigin(0.5);
-        this.add.text(960, 430, `Очки эпизода: ${result.score.toLocaleString("ru-RU")}`, style).setOrigin(0.5);
+        this.add.text(960, 430, `Очки эпизода: ${result.score.toLocaleString("ru-RU")} / ${result.maxScore.toLocaleString("ru-RU")}`, style).setOrigin(0.5);
         this.add.text(960, 495, `Кристаллы: ${result.crystals} / ${result.crystalCount}`, style).setOrigin(0.5);
         this.add.text(960, 555, `Лучший результат: ${result.bestScore.toLocaleString("ru-RU")}`, {
             ...style, fontSize: "27px", color: "#A8A8A8"

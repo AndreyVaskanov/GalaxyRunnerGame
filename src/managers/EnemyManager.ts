@@ -1,10 +1,12 @@
 import type Phaser from "phaser";
+import { BOSS_BALANCE as B } from "../config/BossBalance";
 import type { EnemySpawn } from "../interface/EpisodeConfig";
 import type { BossSnapshot, EnemySnapshot } from "../interface/RunData";
 import Boss from "../gameObjects/Boss";
 import type { HitPoint } from "../enemies/BossCatalog";
 import { bossContactPoint } from "../enemies/BossCatalog";
 import Enemy from "../gameObjects/Enemy";
+import GolemDrone from "../gameObjects/GolemDrone";
 import Projectile from "../gameObjects/Projectile";
 import { enemyId } from "../levels/LevelObjectIds";
 import { GAME_SCALE } from "../config/GameScale";
@@ -53,9 +55,9 @@ export default class EnemyManager {
             this.colliders.push(this.scene.physics.add.overlap(player, enemy.sprite, () => {
                 if (!this.active || enemy.getHealth() <= 0) return;
                 const body = enemy.body;
-                const fromAbove = player.velocity.y > 0 && player.prev.y + player.height <= body.top + 18;
+                const fromAbove = player.velocity.y > 0 && player.prev.y + player.height <= body.top + B.shared.stompTopToleranceWorld;
                 if (fromAbove) {
-                    if (this.stompCooldown <= 0) { this.stompCooldown = 200; this.events.push({ type: "stomp", enemy }); }
+                    if (this.stompCooldown <= 0) { this.stompCooldown = B.shared.stompCooldownMs; this.events.push({ type: "stomp", enemy }); }
                 } else this.events.push({ type: "playerHit", amount: 1 });
             }));
         });
@@ -63,14 +65,21 @@ export default class EnemyManager {
 
     public createBoss(type: string, x: number, y: number, width: number, state?: BossSnapshot | null): void {
         const boss = this.boss = new Boss(this.scene, type, x, y, width, state);
+        if (boss.solidParts.length) {
+            for (const part of boss.solidParts) this.colliders.push(this.scene.physics.add.collider(this.player!, part));
+            return;
+        }
         this.colliders.push(this.scene.physics.add.overlap(this.player!, boss.sprite, () => {
             if (!this.active || !boss.body.enable || boss.getHealth() <= 0) return;
             const player = this.player!;
             const contact = boss.getPlayerContact(player);
             if (!contact) return;
             if (contact.fromAbove) {
-                if (this.stompCooldown <= 0) { this.stompCooldown = 200; this.events.push({ type: "stomp", enemy: boss }); }
-            } else if (boss.definition.type !== "scrap_golem") this.events.push({ type: "playerHit", amount: 0.5 });
+                if (this.stompCooldown <= 0) { this.stompCooldown = B.shared.stompCooldownMs; this.events.push({ type: "stomp", enemy: boss }); }
+            } else {
+                const damage = B.shared.contactDamage[boss.definition.type];
+                if (damage > 0) this.events.push({ type: "playerHit", amount: damage });
+            }
         }));
     }
 
@@ -120,10 +129,9 @@ export default class EnemyManager {
         if (!this.active || !this.player) return;
         this.stompCooldown = Math.max(0, this.stompCooldown - delta);
         for (const enemy of this.enemies) for (const [vx, vy] of enemy.update(delta, this.player)) {
-            if (this.shots.length >= 60) break;
-            const body = enemy.body;
-            const shot = new Projectile(this.scene, body.center.x + Math.sign(vx) * (body.halfWidth + 12),
-                body.center.y + (enemy.isFlying() ? body.halfHeight + 12 : 0), "enemyBullet", vx, vy, 900 * GAME_SCALE,
+            if (this.shots.length >= B.shared.maxEnemyProjectiles) break;
+            const origin = enemy.getShotOrigin(vx, vy);
+            const shot = new Projectile(this.scene, origin.x, origin.y, "enemyBullet", vx, vy, (enemy.id.startsWith("summon:") ? B.scrap_golem.summonedProjectileRangePx : 900) * GAME_SCALE,
                 enemy.definition.type === "sand_beetle" ? 200 * GAME_SCALE : 0);
             if (enemy.definition.type === "snow_legionnaire") shot.sprite.setTint(0x7fdfff);
             if (enemy.definition.type === "sand_beetle") shot.sprite.setTint(0xc9a36a);
@@ -132,31 +140,32 @@ export default class EnemyManager {
             shot.addCollider(this.scene.physics.add.overlap(shot.sprite, this.player, () => {
                 if (!this.active || !shot.alive) return;
                 shot.destroy();
-                this.events.push({ type: "playerHit", amount: enemy.id.startsWith("summon:") ? 0.5 : 1 });
+                this.events.push({ type: "playerHit", amount: enemy.id.startsWith("summon:") ? B.scrap_golem.summonedDamage : 1 });
             }));
             this.shots.push(shot);
         }
         if (this.boss) for (const action of this.boss.update(delta, this.player)) {
-            if (action.type === "hit") this.events.push({ type: "playerHit", amount: 0.5 });
+            if (action.type === "hit") this.events.push({ type: "playerHit", amount: B.shared.attackDamage });
             else if (action.type === "push") this.events.push(action);
             else if (action.type === "summon") {
-                if (this.enemies.filter(enemy => enemy.id.startsWith("summon:")).length >= 3) continue;
-                const enemy = new Enemy(this.scene, { type: "rust_drone", x: Math.max(40, Math.min(1880, action.x)) / GAME_SCALE,
+                if (this.enemies.filter(enemy => enemy.id.startsWith("summon:")).length >= B.scrap_golem.maxSummonedEnemies) continue;
+                const enemy = new GolemDrone(this.scene, { type: B.scrap_golem.summonType, x: Math.max(B.scrap_golem.summonMinXWorld, Math.min(B.scrap_golem.summonMaxXWorld, action.x)) / GAME_SCALE,
                     y: action.y / GAME_SCALE, facing: "left" }, `summon:${this.summonSequence++}`);
                 this.enemies.push(enemy);
                 this.colliders.push(this.scene.physics.add.overlap(this.player, enemy.sprite, () => {
-                    if (this.active && enemy.getHealth() > 0) this.events.push({ type: "playerHit", amount: 0.5 });
+                    if (this.active && enemy.getHealth() > 0) this.events.push({ type: "playerHit", amount: B.scrap_golem.summonedDamage });
                 }));
                 for (const [shot, callback] of this.shotCallbacks) if (shot.alive) this.bindShot(shot, enemy, callback);
-            } else if (action.type === "shot" && this.shots.length < 60) {
+            } else if (action.type === "shot" && this.shots.length < B.shared.maxEnemyProjectiles) {
                 const shot = new Projectile(this.scene, action.x, action.y, "enemyBullet", action.vx, action.vy,
-                    2200 * GAME_SCALE, action.gravity ?? 0);
+                    B.shared.projectileRangePx * GAME_SCALE, action.gravity ?? 0);
+                shot.sprite.setScale(B.shared.defaultProjectileScale * GAME_SCALE);
                 if (action.size) shot.sprite.setDisplaySize(action.size, action.size);
                 if (action.color) shot.sprite.setTint(action.color);
                 shot.addCollider(this.scene.physics.add.collider(shot.sprite, this.terrain, () => shot.destroy()));
                 shot.addCollider(this.scene.physics.add.overlap(shot.sprite, this.player, () => {
                     if (!this.active || !shot.alive) return;
-                    shot.destroy(); this.events.push({ type: "playerHit", amount: 0.5 });
+                    shot.destroy(); this.events.push({ type: "playerHit", amount: B.shared.attackDamage });
                 }));
                 this.shots.push(shot);
             }

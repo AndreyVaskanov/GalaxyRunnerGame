@@ -38,6 +38,10 @@ export default class Hero {
 
     getFacing(): number { return this.sprite.flipX ? -1 : 1; }
     setInvulnerable(value: boolean): void { this.sprite.setAlpha(value ? 0.55 : 1); }
+    setHitFlash(value: boolean): void {
+        if (value) this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        else this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+    }
 
     updateAnimation(): void {
         if (!this.body.onFloor() || this.body.velocity.y !== 0) {

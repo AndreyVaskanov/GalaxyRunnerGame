@@ -64,12 +64,6 @@
    ],
    "enemies": [
     {
-     "type": "dark_guard",
-     "x": 380,
-     "y": 470,
-     "facing": "left"
-    },
-    {
      "type": "shooter",
      "x": 620,
      "y": 380,
@@ -90,7 +84,7 @@
    "platforms": [
     {
      "x": 280,
-     "y": 450,
+     "y": 470,
      "w": 170
     },
     {

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { BOSS_BALANCE } from "../config/BossBalance";
 import type { ControlBinding } from "../config/Controls";
 import type { HitPoint } from "../enemies/BossCatalog";
 import Hero from "../gameObjects/Hero";
@@ -24,6 +25,7 @@ export default class PlayerController {
     private shots: Projectile[] = [];
     private cooldown = 0;
     private invulnerability = 0;
+    private hitFlash = 0;
     private damageFlag = false;
     private knockback = 0;
     private readonly pointerAttack: (pointer: Phaser.Input.Pointer) => void;
@@ -52,6 +54,7 @@ export default class PlayerController {
         this.cooldown = 0;
         this.knockback = 0;
         this.invulnerability = 500;
+        this.hitFlash = 0;
         this.damageFlag = false;
         const bindings = this.settings.getSettings().keys;
         this.keys = this.scene.input.keyboard!.addKeys(Object.fromEntries(
@@ -98,13 +101,15 @@ export default class PlayerController {
     public push(vx: number, vy: number): void {
         if (!this.active) return;
         this.getBody().setVelocity(vx, vy);
-        this.knockback = 300;
+        this.knockback = BOSS_BALANCE.lord_varx.knockbackControlLockMs;
     }
 
     public takeDamage(amount: number): void {
         if (this.active && this.invulnerability <= 0 && Number.isFinite(amount) && amount > 0) {
             this.health = Math.max(0, this.health - amount);
             this.invulnerability = 1000;
+            this.hitFlash = 360;
+            this.hero?.setHitFlash(true);
             this.damageFlag = true;
         }
     }
@@ -114,6 +119,8 @@ export default class PlayerController {
         this.cooldown = Math.max(0, this.cooldown - delta);
         this.invulnerability = Math.max(0, this.invulnerability - delta);
         this.hero.setInvulnerable(this.invulnerability > 0);
+        this.hitFlash = Math.max(0, this.hitFlash - delta);
+        this.hero.setHitFlash(this.hitFlash > 0 && Math.floor((360 - this.hitFlash) / 60) % 2 === 0);
         for (const shot of this.shots) shot.update();
         this.shots = this.shots.filter(shot => shot.alive);
         const attack = this.keys.attack && Phaser.Input.Keyboard.JustDown(this.keys.attack);

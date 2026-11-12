@@ -278,6 +278,9 @@ export default class ProgressSystem {
         if (!attempt) return null;
         const episode = getEpisode(attempt.episodeId);
         const bossPoints = bosses.bosses[episode.boss as keyof typeof bosses.bosses].points;
+        const maxScore = bossPoints + episode.screens.reduce((sum, screen) => sum
+            + screen.crystals.length * rules.crystal.points
+            + screen.enemies.reduce((points, enemy) => points + getEnemy(enemy.type).points, 0), 0);
         if (!Number.isSafeInteger(this.completedScore + this.data.score + bossPoints)) return null;
         {
             this.addScore(bossPoints);
@@ -301,7 +304,7 @@ export default class ProgressSystem {
         this.completedScore += score;
         this.attempt = null;
         const saved = this.save();
-        return { episodeId: attempt.episodeId, score, crystals, crystalCount,
+        return { episodeId: attempt.episodeId, score, maxScore, crystals, crystalCount,
             stars, bestScore: this.bestScores[id], nextEpisodeId, saved };
     }
 

@@ -58,6 +58,7 @@ export type LevelEvent =
 export interface EpisodeResult {
     episodeId: number;
     score: number;
+    maxScore: number;
     crystals: number;
     crystalCount: number;
     stars: number;
