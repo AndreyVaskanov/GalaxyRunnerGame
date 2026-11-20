@@ -2,17 +2,25 @@ import Phaser from "phaser";
 import Button from "../ui/Button";
 import SceneManager from "../managers/SceneManager";
 import type { EpisodeMapEntry } from "../interface/EpisodeMapEntry";
+import { preloadBoss } from "../enemies/EnemyAssets";
 // SVG-загрузчик Phaser ожидает URL файла, а не percent-encoded data URL от Vite.
 import lock from "../assets/ui/icons/lock.svg?no-inline";
 
 const numerals = ["I", "II", "III", "IV"];
 const yellow = "#F2C94C";
+const episodeColors: Record<number, number> = {
+    1: 0xc9a36a,
+    2: 0x9ccad9,
+    3: 0xd64545,
+    4: 0xe88b3a,
+};
 
 export default class ChapterMap extends Phaser.Scene {
     constructor() { super("ChapterMap"); }
 
     preload(): void {
         if (!this.textures.exists("map-lock")) this.load.svg("map-lock", lock, { width: 60, height: 60 });
+        for (const episode of SceneManager.getEpisodeMap()) preloadBoss(this, episode.bossType);
     }
 
     create(): void {
@@ -65,7 +73,7 @@ export default class ChapterMap extends Phaser.Scene {
 
         const drawSelection = () => {
             score.setText(`Всего очков: ${SceneManager.getTotalScore().toLocaleString("ru-RU")}`);
-            selection.clear().lineStyle(2, 0xf2c94c, 0.5);
+            selection.clear().lineStyle(2, episodeColors[selected.id]!, 0.8);
             selection.strokeCircle(positions.get(selected.id)!, 385, 104);
             const numeral = numerals[selected.id - 1];
             conditions.setText([
@@ -80,7 +88,7 @@ export default class ChapterMap extends Phaser.Scene {
             const allowed = selected.heroAllowed;
             status.setText(!allowed ? `Для этого эпизода выберите героя ${selected.requiredHeroName}`
                 : selected.canContinue ? "Есть сохранённое прохождение"
-                : "Два экрана и арена босса");
+                : "");
             const launch = (continueSaved: boolean) => {
                 this.input.setDefaultCursor("default");
                 SceneManager.startEpisode(this.scene.key, selected.id, continueSaved);
@@ -88,6 +96,7 @@ export default class ChapterMap extends Phaser.Scene {
             startButton = new Button(this, {
                 x: 1560, y: 970, width: 540, height: 75,
                 text: `${selected.canContinue ? "Продолжить" : "Начать"} эпизод ${numeral}`,
+                sound: "uiStart",
                 fontSize: 27, backgroundColor: 0xf2c94c, textColor: "#000000",
                 click: () => launch(selected.canContinue)
             });
@@ -96,6 +105,7 @@ export default class ChapterMap extends Phaser.Scene {
             if (selected.canContinue && allowed) {
                 restartButton = new Button(this, {
                     x: 1560, y: 1035, width: 450, height: 40, text: "Начать эпизод заново",
+                    sound: "uiStart",
                     fontSize: 21, backgroundAlpha: 0, textColor: "#A8A8A8", click: () => launch(false)
                 });
             }
@@ -104,15 +114,23 @@ export default class ChapterMap extends Phaser.Scene {
         episodes.forEach((episode: EpisodeMapEntry, index) => {
             const x = 350 + index * 405;
             positions.set(episode.id, x);
-            const color = !episode.unlocked ? 0x505050 : episode.stars > 0 ? 0xc9a36a : 0x5af6b8;
-            const planet = this.add.circle(x, 385, 90, color).setStrokeStyle(4.5, episode.unlocked ? 0xf2c94c : 0x323232);
+            const color = episode.id === 3 ? 0x303449 : episodeColors[episode.id]!;
+            const planet = this.add.circle(x, 385, 90, color)
+                .setStrokeStyle(4.5, episodeColors[episode.id]!, episode.unlocked ? 1 : 0.55);
+            const boss = this.add.image(x, 385, `boss-${episode.bossType}`);
+            // Большая сторона босса — половина диаметра значка, пропорции сохранены.
+            boss.setScale(90 / Math.max(boss.width, boss.height));
+            if (!episode.unlocked) boss.setAlpha(0.35);
             if (episode.unlocked) {
                 planet.setInteractive({ useHandCursor: true });
-                planet.on("pointerdown", () => { selected = episode; drawSelection(); });
+                planet.on("pointerdown", () => {
+                    if (selected.id !== episode.id) SceneManager.playUiSound("uiSelect");
+                    selected = episode; drawSelection();
+                });
                 planet.on("pointerover", () => planet.setAlpha(0.85));
                 planet.on("pointerout", () => planet.setAlpha(1));
             } else {
-                this.add.image(x, 385, "map-lock").setDisplaySize(45, 45).setAlpha(0.7);
+                this.add.image(x, 447, "map-lock").setDisplaySize(30, 30).setAlpha(0.7);
             }
             this.add.text(x, 505, `ЭПИЗОД ${numerals[index]}`, {
                 fontFamily: "'Press Start 2P'", fontSize: "24px", color: episode.unlocked ? yellow : "#A8A8A8"

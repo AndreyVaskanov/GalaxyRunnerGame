@@ -8,10 +8,17 @@ import { getBoss } from "./BossCatalog";
 const bossSprites = import.meta.glob<string>("../assets/sprites/boss_*.png", { eager: true, query: "?url", import: "default" });
 const sprites = import.meta.glob<string>("../assets/sprites/enemy_*.png", { eager: true, query: "?url", import: "default" });
 
+export function preloadBoss(scene: Phaser.Scene, type: string): void {
+    const boss = getBoss(type);
+    const key = `boss-${type}`;
+    const url = bossSprites[`../assets/sprites/${boss.sprite}`];
+    if (!url) throw new Error(`Не найден спрайт босса: ${boss.sprite}`);
+    if (!scene.textures.exists(key)) scene.load.image(key, url);
+}
+
 export function preloadEnemies(scene: Phaser.Scene, episodeId: number): void {
     const episode = getEpisode(episodeId);
-    const boss = getBoss(episode.boss);
-    if (!scene.textures.exists(`boss-${episode.boss}`)) scene.load.image(`boss-${episode.boss}`, bossSprites[`../assets/sprites/${boss.sprite}`]!);
+    preloadBoss(scene, episode.boss);
     for (const spawn of [...episode.screens.flatMap(screen => screen.enemies), { type: "rust_drone" }]) {
         const definition = getEnemy(spawn.type);
         const key = `enemy-${spawn.type}`;

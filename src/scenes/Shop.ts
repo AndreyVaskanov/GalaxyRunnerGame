@@ -68,8 +68,10 @@ export default class Shop extends Phaser.Scene {
                 } else {
                     const button = new Button(this, {
                         x, y: 825, width: 315, height: 70, text: `◆ ${hero.price} — купить`,
+                        sound: false,
                         fontSize: 27, backgroundColor: 0xf2c94c, textColor: "#000000", click: () => {
                             const result = SceneManager.purchaseCharacter(hero.id);
+                            SceneManager.playUiSound(result.success ? "uiPurchase" : "uiError");
                             status.setText(result.message).setColor(result.success ? "#5AF6B8" : "#FF9B9B");
                             this.input.setDefaultCursor("default");
                             redraw();
@@ -83,7 +85,7 @@ export default class Shop extends Phaser.Scene {
         redraw();
         new Button(this, {
             x: 1620, y: 1020, width: 420, height: 70, text: "Выбрать героя →", fontSize: 27,
-            backgroundColor: 0xf2c94c, textColor: "#000000", click: () => leave("CharacterSelect")
+            variant: "outline", textColor: "#DCE5F2", click: () => leave("CharacterSelect")
         });
         this.add.text(90, 1020, "Покупки сохраняются при перезапуске эпизода.", {
             ...style, fontSize: "22px", color: "#A8A8A8"

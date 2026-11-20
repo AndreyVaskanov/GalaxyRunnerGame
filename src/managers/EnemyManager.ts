@@ -10,11 +10,13 @@ import GolemDrone from "../gameObjects/GolemDrone";
 import Projectile from "../gameObjects/Projectile";
 import { enemyId } from "../levels/LevelObjectIds";
 import { GAME_SCALE } from "../config/GameScale";
+import type { SoundEffectKey } from "../config/SoundEffects";
 
 export type ManagedEnemy = Enemy | Boss;
 type CombatEvent = { type: "defeated"; id: string } | { type: "bossDefeated" }
     | { type: "playerHit"; amount: number } | { type: "push"; vx: number; vy: number }
-    | { type: "stomp"; enemy: ManagedEnemy };
+    | { type: "stomp"; enemy: ManagedEnemy }
+    | { type: "sound"; key: SoundEffectKey };
 
 export default class EnemyManager {
     private readonly scene: Phaser.Scene;
@@ -106,9 +108,11 @@ export default class EnemyManager {
     public setActive(active: boolean): void { this.active = active; }
 
     public damageEnemy(enemy: ManagedEnemy, amount: number, hit?: HitPoint): void {
-        if (!this.active || !(enemy === this.boss || this.enemies.includes(enemy as Enemy)) || !Number.isFinite(amount) || amount <= 0) return;
+        if (!this.active || !(enemy === this.boss || this.enemies.includes(enemy as Enemy))
+            || enemy.getHealth() <= 0 || !Number.isFinite(amount) || amount <= 0) return;
         if (enemy instanceof Boss) {
             if (!hit || !enemy.takeDamage(amount, hit)) return;
+            this.events.push({ type: "sound", key: `bossHit_${enemy.definition.type}` });
             if (enemy.getHealth() <= 0) {
                 this.events.push({ type: "bossDefeated" });
                 this.boss = null;
@@ -118,6 +122,7 @@ export default class EnemyManager {
             return;
         }
         enemy.takeDamage(amount);
+        this.events.push({ type: "sound", key: "enemyHit" });
         if (enemy.getHealth() <= 0) {
             if (!enemy.id.startsWith("summon:")) this.events.push({ type: "defeated", id: enemy.id });
             this.enemies = this.enemies.filter(item => item !== enemy);
@@ -128,30 +133,39 @@ export default class EnemyManager {
     public update(delta: number): void {
         if (!this.active || !this.player) return;
         this.stompCooldown = Math.max(0, this.stompCooldown - delta);
-        for (const enemy of this.enemies) for (const [vx, vy] of enemy.update(delta, this.player)) {
-            if (this.shots.length >= B.shared.maxEnemyProjectiles) break;
-            const origin = enemy.getShotOrigin(vx, vy);
-            const shot = new Projectile(this.scene, origin.x, origin.y, "enemyBullet", vx, vy, (enemy.id.startsWith("summon:") ? B.scrap_golem.summonedProjectileRangePx : 900) * GAME_SCALE,
-                enemy.definition.type === "sand_beetle" ? 200 * GAME_SCALE : 0);
-            if (enemy.definition.type === "snow_legionnaire") shot.sprite.setTint(0x7fdfff);
-            if (enemy.definition.type === "sand_beetle") shot.sprite.setTint(0xc9a36a);
-            if (enemy.definition.type === "dark_guard") shot.sprite.setTint(0xbf70ff);
-            shot.addCollider(this.scene.physics.add.collider(shot.sprite, this.terrain, () => shot.destroy()));
-            shot.addCollider(this.scene.physics.add.overlap(shot.sprite, this.player, () => {
-                if (!this.active || !shot.alive) return;
-                shot.destroy();
-                this.events.push({ type: "playerHit", amount: enemy.id.startsWith("summon:") ? B.scrap_golem.summonedDamage : 1 });
-            }));
-            this.shots.push(shot);
+        for (const enemy of this.enemies) {
+            let fired = false;
+            for (const [vx, vy] of enemy.update(delta, this.player)) {
+                if (this.shots.length >= B.shared.maxEnemyProjectiles) break;
+                const origin = enemy.getShotOrigin(vx, vy);
+                const shot = new Projectile(this.scene, origin.x, origin.y, "enemyBullet", vx, vy, (enemy.id.startsWith("summon:") ? B.scrap_golem.summonedProjectileRangePx : 900) * GAME_SCALE,
+                    enemy.definition.type === "sand_beetle" ? 200 * GAME_SCALE : 0);
+                if (enemy.definition.type === "snow_legionnaire") shot.sprite.setTint(0x7fdfff);
+                if (enemy.definition.type === "sand_beetle") shot.sprite.setTint(0xc9a36a);
+                if (enemy.definition.type === "dark_guard") shot.sprite.setTint(0xbf70ff);
+                shot.addCollider(this.scene.physics.add.collider(shot.sprite, this.terrain, () => shot.destroy()));
+                shot.addCollider(this.scene.physics.add.overlap(shot.sprite, this.player, () => {
+                    if (!this.active || !shot.alive) return;
+                    shot.destroy();
+                    this.events.push({ type: "playerHit", amount: enemy.id.startsWith("summon:") ? B.scrap_golem.summonedDamage : 1 });
+                }));
+                this.shots.push(shot);
+                fired = true;
+            }
+            if (fired) this.events.push({ type: "sound", key: `enemyShot_${enemy.definition.type}` });
         }
+        // Две волны или несколько призванных юнитов одного действия звучат один раз.
+        const bossSounds = new Set<SoundEffectKey>();
         if (this.boss) for (const action of this.boss.update(delta, this.player)) {
             if (action.type === "hit") this.events.push({ type: "playerHit", amount: B.shared.attackDamage });
+            else if (action.type === "sound") bossSounds.add(action.key);
             else if (action.type === "push") this.events.push(action);
             else if (action.type === "summon") {
                 if (this.enemies.filter(enemy => enemy.id.startsWith("summon:")).length >= B.scrap_golem.maxSummonedEnemies) continue;
                 const enemy = new GolemDrone(this.scene, { type: B.scrap_golem.summonType, x: Math.max(B.scrap_golem.summonMinXWorld, Math.min(B.scrap_golem.summonMaxXWorld, action.x)) / GAME_SCALE,
                     y: action.y / GAME_SCALE, facing: "left" }, `summon:${this.summonSequence++}`);
                 this.enemies.push(enemy);
+                bossSounds.add("golemSummon");
                 this.colliders.push(this.scene.physics.add.overlap(this.player, enemy.sprite, () => {
                     if (this.active && enemy.getHealth() > 0) this.events.push({ type: "playerHit", amount: B.scrap_golem.summonedDamage });
                 }));
@@ -168,8 +182,10 @@ export default class EnemyManager {
                     shot.destroy(); this.events.push({ type: "playerHit", amount: B.shared.attackDamage });
                 }));
                 this.shots.push(shot);
+                if (action.sound) bossSounds.add(action.sound);
             }
         }
+        for (const key of bossSounds) this.events.push({ type: "sound", key });
         for (const [shot] of this.shotCallbacks) if (!shot.alive) this.shotCallbacks.delete(shot);
         for (const shot of this.shots) shot.update();
         this.shots = this.shots.filter(shot => shot.alive);

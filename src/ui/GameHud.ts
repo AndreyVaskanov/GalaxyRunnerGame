@@ -30,7 +30,7 @@ export default class GameHud {
             .setOrigin(1, 0.5).setDepth(101);
         new Button(scene, {
             x: 1835, y: 45, width: 60, height: 60, text: "Ⅱ", fontSize: 30,
-            borderWidth: 2, backgroundAlpha: 0, click: () => SceneManager.pauseGame()
+            borderWidth: 2, backgroundAlpha: 0, sound: false, click: () => SceneManager.pauseGame()
         }).setDepth(101);
         this.message = scene.add.text(960, 110, "", { ...style, fontSize: "22px", color: "#080D17",
             backgroundColor: "#F2C94C", padding: { x: 12, y: 6 } }).setOrigin(0.5, 0).setDepth(101);
