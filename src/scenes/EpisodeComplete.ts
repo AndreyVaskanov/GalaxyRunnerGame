@@ -45,25 +45,30 @@ export default class EpisodeComplete extends Phaser.Scene {
         if (!result.saved) {
             const retry = new Button(this, {
                 x: 960, y: 795, width: 360, height: 40, text: "Повторить сохранение", fontSize: 22,
+                sound: false,
                 backgroundAlpha: 0, textColor: "#F2C94C", click: () => {
                     result.saved = SceneManager.saveProgress();
+                    SceneManager.playUiSound(result.saved ? "uiConfirm" : "uiError");
                     if (result.saved) { saved.setText("Прогресс сохранён").setColor("#5AF6B8"); retry.destroy(); }
                 }
             });
         }
         new Button(this, {
             x: 630, y: 890, width: 300, height: 75, text: "Пройти заново", fontSize: 27,
+            sound: "uiStart",
             backgroundAlpha: 0, borderWidth: 1.5, borderColor: 0xa8a8a8,
             click: act(() => { SceneManager.startEpisode(this.scene.key, result.episodeId); })
         });
         new Button(this, {
             x: 960, y: 890, width: 300, height: 75, text: "На карту", fontSize: 27,
+            sound: "uiBack",
             backgroundAlpha: 0, borderWidth: 1.5, borderColor: 0xa8a8a8,
             click: act(() => SceneManager.showScene(this.scene.key, "ChapterMap"))
         });
         new Button(this, {
             x: 1290, y: 890, width: 300, height: 75,
             text: next ? "Дальше →" : "Главное меню", fontSize: 27,
+            sound: next?.heroAllowed ? "uiStart" : "uiBack",
             backgroundColor: 0xf2c94c, textColor: "#000000",
             click: act(() => {
                 if (next?.heroAllowed) SceneManager.startEpisode(this.scene.key, next.id);

@@ -8,7 +8,13 @@ export default class MainMenu extends Phaser.Scene {
         super("MainMenu")
     }
 
+    preload(): void {
+        SceneManager.preloadUiSounds(this);
+        SceneManager.preloadMenuMusic(this);
+    }
+
     create() : void {
+        SceneManager.playMenuMusic();
 
         this.cameras.main.setBackgroundColor("#080D17")
 
@@ -16,6 +22,8 @@ export default class MainMenu extends Phaser.Scene {
             new Button(this, {
                 x: 1645, y: 75, width: 420, height: 72,
                 text: "Продолжить прохождение →", fontSize: 24,
+                variant: "outline",
+                sound: "uiStart",
                 textColor: "#F2C94C", backgroundColor: 0x141e2e, borderWidth: 2, borderColor: 0x88773e,
                 click: () => {
                     this.input.setDefaultCursor("default");

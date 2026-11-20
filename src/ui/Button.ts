@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import SceneManager from "../managers/SceneManager";
+import type { UiSoundKey } from "../config/SoundEffects";
 
 interface ButtonConfig {
 
@@ -8,7 +10,9 @@ interface ButtonConfig {
     height: number
 
     text: string
-    variant?: "back"
+    variant?: "back" | "outline"
+    /** Тип звука; false — звук определяется результатом обработчика. */
+    sound?: UiSoundKey | false
     fontFamily?: string
     fontSize?: number
     textColor?: string
@@ -35,17 +39,18 @@ export default class Button extends Phaser.GameObjects.Container {
         let height = config.height
 
         const isBack = config.variant === "back"
+        const isOutlined = isBack || config.variant === "outline"
         let text = isBack ? config.text.replace(/^←\s*/, "") : config.text
         let fontFamily = config.fontFamily ?? "Rubik"
         let fontSize = config.fontSize ?? 20
         let textColor = isBack ? "#DCE5F2" : config.textColor ?? "#FFFFFF"
 
-        let backgroundColor = isBack ? 0x141e2e : config.backgroundColor ?? 0x000000
-        let backgroundAlpha = isBack ? 1 : config.backgroundAlpha ?? 1
+        let backgroundColor = isOutlined ? 0x080d17 : config.backgroundColor ?? 0x000000
+        let backgroundAlpha = isOutlined ? 1 : config.backgroundAlpha ?? 1
         let radius = config.radius ?? 12
-        let borderColor = isBack ? 0x3b4c65 : config.borderColor ?? 0xFFFFFF
+        let borderColor = isOutlined ? 0x3b4c65 : config.borderColor ?? 0xFFFFFF
         let borderAlpha = config.borderAlpha ?? 1
-        let borderWidth = isBack ? 2 : config.borderWidth ?? 0
+        let borderWidth = isOutlined ? 2 : config.borderWidth ?? 0
 
         let click = config.click
 
@@ -113,6 +118,9 @@ export default class Button extends Phaser.GameObjects.Container {
         });
 
         this.on("pointerdown", () => {
+            if (!click) return;
+            const sound = config.sound ?? (isBack ? "uiBack" : "uiNavigate");
+            if (sound !== false) SceneManager.playUiSound(sound);
             click?.()
         })
 

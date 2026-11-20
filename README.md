@@ -75,3 +75,4 @@ npm run deploy
 Пример приведён для поддомена `game.example.com`. Для корневого домена `example.com` используйте [инструкцию GitHub](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
 
 Файл `public/CNAME` автоматически копируется в сборку при каждой публикации. Для обновления игры повторно выполните `npm run deploy`.
+
