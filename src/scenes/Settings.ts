@@ -49,6 +49,7 @@ export default class Settings extends Phaser.Scene {
             event.stopPropagation();
             if (event.code === "Escape" && this.pending !== "pause" && this.pending !== "pauseAlternative") {
                 this.pending = null;
+                SceneManager.playUiSound("uiCancel");
                 this.status.setText("Ввод отменён").setColor("#A8A8A8");
                 this.drawContent();
                 return;
@@ -76,6 +77,7 @@ export default class Settings extends Phaser.Scene {
 
     private applyBinding(binding: ControlBinding, key: string): void {
         const result = SceneManager.assignKey(binding, key);
+        SceneManager.playUiSound(result.applied ? "uiConfirm" : "uiError");
         if (result.conflict) {
             this.pending = null;
             this.drawContent();
@@ -104,13 +106,15 @@ export default class Settings extends Phaser.Scene {
         };
         const confirm = () => {
             const result = SceneManager.assignKey(binding, key, true);
+            SceneManager.playUiSound(result.applied ? "uiConfirm" : "uiError");
             close(); this.drawContent();
             this.status.setText(result.message).setColor(result.saved ? "#5AF6B8" : "#FF9B9B");
         };
         this.confirmModal = confirm;
-        this.cancelModal = close;
-        modal.add(new Button(this, { x: 760, y: 640, width: 300, height: 65, text: "Отмена", click: close }));
-        modal.add(new Button(this, { x: 1160, y: 640, width: 300, height: 65, text: "Поменять местами", backgroundColor: 0xf2c94c, textColor: "#000000", click: confirm }));
+        const cancel = () => { SceneManager.playUiSound("uiCancel"); close(); };
+        this.cancelModal = cancel;
+        modal.add(new Button(this, { x: 760, y: 640, width: 300, height: 65, text: "Отмена", sound: false, click: cancel }));
+        modal.add(new Button(this, { x: 1160, y: 640, width: 300, height: 65, text: "Поменять местами", sound: false, backgroundColor: 0xf2c94c, textColor: "#000000", click: confirm }));
     }
 
     private drawContent(): void {
@@ -139,6 +143,7 @@ export default class Settings extends Phaser.Scene {
                 const waiting = binding === this.pending;
                 add(new Button(this, {
                     x, y, width: 210, height: 60, text: waiting ? "Нажмите клавишу…" : keyLabel(settings.keys[binding]),
+                    sound: waiting ? "uiCancel" : "uiSelect",
                     fontSize: waiting ? 18 : 24, backgroundColor: 0x141823,
                     borderWidth: waiting ? 3 : 0, borderColor: 0xf2c94c, textColor: waiting ? "#F2C94C" : "#FFFFFF",
                     click: () => {
@@ -150,11 +155,6 @@ export default class Settings extends Phaser.Scene {
                 }));
             });
         });
-        const hint = add(this.add.graphics().lineStyle(1.5, 0x962828));
-        hint.strokeRoundedRect(90, 800, 765, 105, 9);
-        add(this.add.text(110, 817, "Выберите ячейку и нажмите клавишу или ЛКМ.\nEsc — отмена; в строке паузы назначает Esc.\nОбмен занятых клавиш: Enter — подтвердить, Esc — отменить.", {
-            ...style, fontSize: "20px", color: "#C9A36A", lineSpacing: 4
-        }));
         const slider = (label: string, key: "musicVolume" | "effectsVolume", y: number) => {
             add(this.add.text(1140, y, label, { ...style, fontSize: "27px" }));
             const percent = add(this.add.text(1740, y, `${Math.round(settings[key] * 100)}%`, {
@@ -175,11 +175,9 @@ export default class Settings extends Phaser.Scene {
         };
         slider("Музыка", "musicVolume", 315);
         slider("Звуки игры", "effectsVolume", 520);
-        add(this.add.text(1140, 710, "Шаг — 10%. Изменения сохраняются сразу.\nАудио пока недоступно.", {
-            ...style, fontSize: "21px", color: "#C9A36A", lineSpacing: 8
-        }));
         add(new Button(this, {
             x: 1440, y: 845, width: 600, height: 75, text: "↶ Сбросить по умолчанию", fontSize: 27,
+            sound: "uiSelect",
             backgroundAlpha: 0, borderWidth: 1.5, borderColor: 0xa8a8a8, click: () => this.confirmReset()
         }));
     }
@@ -206,12 +204,15 @@ export default class Settings extends Phaser.Scene {
         const close = () => { modal.destroy(); this.modal = null; this.input.setDefaultCursor("default"); };
         modal.add(new Button(this, {
             x: 800, y: 690, width: 270, height: 67.5, text: "Отмена", fontSize: 24,
+            sound: "uiCancel",
             backgroundColor: 0xf2c94c, textColor: "#000000", click: close
         }));
         modal.add(new Button(this, {
             x: 1120, y: 690, width: 270, height: 67.5, text: "Сбросить", fontSize: 24,
+            sound: false,
             backgroundAlpha: 0, borderWidth: 3, click: () => {
                 const saved = SceneManager.resetSettings();
+                SceneManager.playUiSound(saved ? "uiConfirm" : "uiError");
                 close();
                 this.drawContent();
                 this.status.setText(saved ? "Настройки сброшены и сохранены" : "Настройки сброшены, но сохранить их в браузере не удалось.")

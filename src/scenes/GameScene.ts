@@ -30,11 +30,14 @@ export default abstract class GameScene extends Phaser.Scene {
             ?? SceneManager.getSelectedCharacter();
         preloadHero(this, this.character.id, this.character.sprite);
         LevelManager.preloadEpisode(this, this.episodeId);
+        appServices.audio.preloadEffects(this);
+        appServices.audio.preloadMusic(this, this.episodeId);
     }
 
     create(): void {
         const enemies = new EnemyManager(this);
-        const player = new PlayerController(this, appServices.settings, enemies, this.character);
+        const player = new PlayerController(this, appServices.settings, enemies, this.character,
+            key => this.gameManager.playEffect(key));
         const levels = new LevelManager(this, enemies);
         this.gameManager = new GameManager(levels, player, enemies, appServices.progress, appServices.audio);
         SceneManager.setGameManager(this.gameManager, this.scene.key);

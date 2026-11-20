@@ -49,7 +49,7 @@ export default class HowToPlay extends Phaser.Scene {
         });
         new Button(this, {
             x: 330, y: 950, width: 480, height: 75, text: "Настроить управление", fontSize: 27,
-            backgroundColor: 0x141e2e, borderWidth: 2, borderColor: 0x5b6b83, click: () => leave("Settings")
+            variant: "outline", textColor: "#DCE5F2", click: () => leave("Settings")
         });
     }
 }

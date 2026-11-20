@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import SceneManager from "../managers/SceneManager";
 
 // Действующий регулятор: нажатие/перетаскивание с шагом 10%.
 export default class VolumeSlider extends Phaser.GameObjects.Container {
@@ -23,6 +24,7 @@ export default class VolumeSlider extends Phaser.GameObjects.Container {
             this.fill.width = width * next;
             this.thumb.x = -width / 2 + width * next;
             onChange(next);
+            SceneManager.playUiSound("uiAdjust");
         };
         this.on("pointerdown", change);
         this.on("drag", change);

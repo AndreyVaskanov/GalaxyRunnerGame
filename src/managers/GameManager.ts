@@ -89,6 +89,7 @@ export default class GameManager {
         this.player.moveTo(spawn.x, spawn.y);
         this.progress.setEnemySnapshot(this.enemies.getSnapshot());
         this.progress.setBossSnapshot(this.enemies.getBossSnapshot());
+        this.updateMusic();
         return true;
     }
 
@@ -129,8 +130,13 @@ export default class GameManager {
                 if (this.player.getHealth() <= 0) { this.lose(); return; }
                 this.progress.setPlayerHealth(this.player.getHealth());
             }
-            else if (event.type === "crystal") this.progress.collectCrystal(event.id);
-            else if (event.type === "checkpoint") this.recordSave(this.progress.saveCheckpoint(event.id, event.position, this.player.getHealth()));
+            else if (event.type === "crystal") {
+                if (this.progress.collectCrystal(event.id)) this.audio.playEffect("crystalCollect");
+            }
+            else if (event.type === "checkpoint") {
+                this.recordSave(this.progress.saveCheckpoint(event.id, event.position, this.player.getHealth()));
+                this.audio.playEffect("checkpointActivate");
+            }
         }
     }
 
@@ -146,6 +152,7 @@ export default class GameManager {
                 else if (event.type === "bossDefeated") bossDefeated = true;
                 else if (event.type === "stomp") this.player.stompEnemy(event.enemy);
                 else if (event.type === "push") pushes.push(event);
+                else if (event.type === "sound") this.audio.playEffect(event.key);
                 else hits.push(event.amount);
             }
             events = this.enemies.drainEvents();
@@ -158,7 +165,7 @@ export default class GameManager {
         if (this.player.consumeDamageFlag()) this.progress.markDamaged();
         if (bossDefeated) {
             for (const event of this.levels.drainEvents()) {
-                if (event.type === "crystal") this.progress.collectCrystal(event.id);
+                if (event.type === "crystal" && this.progress.collectCrystal(event.id)) this.audio.playEffect("crystalCollect");
             }
             this.win();
         }
@@ -219,6 +226,12 @@ export default class GameManager {
      this.state = GameState.Play;
         this.player.setActive(true);
         this.enemies.setActive(true);
+        this.updateMusic();
+    }
+
+    private updateMusic(): void {
+        const selection = this.levels.getSelection();
+        if (selection) this.audio.playEpisodeMusic(selection.episodeId, selection.screenIndex);
     }
 
     public getResult(): EpisodeResult | null { return structuredClone(this.result); }
@@ -229,6 +242,7 @@ export default class GameManager {
         if (!result) return;
         this.result = result;
         this.state = GameState.VictoryPause;
+        this.audio.playEffect("episodeComplete");
         this.victoryTime = 2000;
         this.message = "Босс побеждён!";
         this.messageTime = Infinity;
@@ -244,6 +258,7 @@ export default class GameManager {
         else if (attempt) this.progress.restartAttempt({ ...this.levels.getSpawnPoint(attempt.episodeId, 0), screenIndex: 0 });
         this.recordSave(this.progress.save());
         this.state = GameState.Lose;
+        this.audio.playEffect("playerDeath");
         this.player.setActive(false);
         this.enemies.setActive(false);
     }

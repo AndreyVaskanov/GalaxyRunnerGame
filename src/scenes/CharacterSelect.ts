@@ -33,6 +33,7 @@ export default class CharacterSelect extends Phaser.Scene {
         const choose = (hero: HeroDefinition) => {
             if (!SceneManager.isCharacterOwned(hero.id)) return;
             const saved = SceneManager.selectCharacter(hero.id);
+            SceneManager.playUiSound("uiSelect");
             redraw();
             status.setText(saved ? `${hero.name} выбран` : "Герой выбран. Сохранить выбор в браузере не удалось.");
         };
@@ -72,14 +73,17 @@ export default class CharacterSelect extends Phaser.Scene {
             const hitArea = this.add.zone(x, y, 375, 525).setInteractive({ useHandCursor: owned });
             hitArea.on("pointerdown", () => {
                 if (owned) choose(hero);
-                else status.setText("Герой ещё не приобретён. Откройте магазин отдельной кнопкой вверху.");
+                else {
+                    SceneManager.playUiSound("uiError");
+                    status.setText("Герой ещё не приобретён. Откройте магазин отдельной кнопкой вверху.");
+                }
             });
         });
         redraw();
         new Button(this, {
             x: this.scale.width - 250, y: 70, width: 400, height: 64,
             text: `Магазин · ◆ ${SceneManager.getProgress().crystals}`, fontSize: 24,
-            textColor: "#080D17", backgroundColor: 0xf2c94c, borderWidth: 2, borderColor: 0xf2c94c,
+            variant: "outline", textColor: "#DCE5F2",
             click: () => { this.input.setDefaultCursor("default"); SceneManager.showShop(this.scene.key); }
         });
         new Button(this, {
@@ -89,6 +93,7 @@ export default class CharacterSelect extends Phaser.Scene {
         });
         new Button(this, {
             x: this.scale.width - 240, y: 970, width: 330, height: 75, text: "Готово →",
+            sound: "uiConfirm",
             fontSize: 27, backgroundColor: 0xf2c94c, textColor: "#000000",
             click: () => {
                 this.input.setDefaultCursor("default");

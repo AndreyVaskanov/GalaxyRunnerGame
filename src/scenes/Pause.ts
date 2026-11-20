@@ -33,7 +33,7 @@ export default class Pause extends Phaser.Scene {
         this.add.rectangle(cx, cy, width, height, 0x000000, 0.7).setInteractive();
         const panel = this.add.graphics();
         panel.fillStyle(0x080d17, 1);
-        panel.fillRoundedRect(cx - 300, cy - 375, 600, 750, 18);
+        panel.fillRoundedRect(cx - 300, cy - 400, 600, 800, 18);
         this.add.text(cx, cy - 300, "ПАУЗА", {
             fontFamily: "'Press Start 2P'", fontSize: "54px", color: "#F2C94C"
         }).setOrigin(0.5);
@@ -45,16 +45,19 @@ export default class Pause extends Phaser.Scene {
         new Button(this, {
             x: cx, y: cy - 195, width: 450, height: 75, radius: 12,
             text: "Продолжить", fontSize: 27, backgroundColor: 0xf2c94c,
+            borderWidth: 1.5, borderColor: 0xf2c94c,
+            sound: false,
             textColor: "#000000", click: act(() => SceneManager.resumeGame())
         });
         new Button(this, {
             x: cx, y: cy - 97.5, width: 450, height: 75, radius: 12,
             text: "Начать уровень заново", fontSize: 27, backgroundAlpha: 0,
+            sound: "uiStart",
             borderWidth: 1.5, borderColor: 0xa8a8a8, click: act(() => SceneManager.restartGame())
         });
 
         const settings = SceneManager.getSettings();
-        const status = this.add.text(cx, cy + 340, "", {
+        const status = this.add.text(cx, cy + 370, "", {
             fontFamily: "Rubik", fontSize: "17px", color: "#A8A8A8", wordWrap: { width: 480 }, align: "center"
         }).setOrigin(0.5);
         const slider = (label: string, key: "musicVolume" | "effectsVolume", y: number) => {
@@ -73,14 +76,18 @@ export default class Pause extends Phaser.Scene {
         slider("Звуки", "effectsVolume", cy + 82.5);
         if (SceneManager.canRestoreCheckpoint()) {
             new Button(this, {
-                x: cx, y: cy + 187.5, width: 450, height: 50, text: "Вернуться к чекпоинту",
-                fontSize: 23, textColor: "#5FD3FF", backgroundAlpha: 0,
+                x: cx, y: cy + 202.5, width: 450, height: 75, radius: 12, text: "Вернуться к чекпоинту",
+                sound: "uiStart",
+                fontSize: 27, textColor: "#5FD3FF", backgroundAlpha: 0,
+                borderWidth: 1.5, borderColor: 0xa8a8a8,
                 click: act(() => SceneManager.restoreCheckpoint())
             });
         }
         new Button(this, {
-            x: cx, y: cy + 270, width: 450, height: 75, radius: 12,
+            x: cx, y: cy + 300, width: 450, height: 75, radius: 12,
             text: "Выйти на карту эпизодов", fontSize: 25, backgroundAlpha: 0,
+            borderWidth: 1.5, borderColor: 0xa8a8a8,
+            sound: "uiBack",
             click: act(() => SceneManager.exitToChapterMap())
         });
 

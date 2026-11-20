@@ -3,6 +3,7 @@ export interface EpisodeMapEntry {
     name: string;
     location: string;
     bossName: string;
+    bossType: string;
     stars: number;
     unlocked: boolean;
     heroAllowed: boolean;

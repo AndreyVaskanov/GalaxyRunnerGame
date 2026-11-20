@@ -4,9 +4,11 @@ import { GAME_SCALE } from "../config/GameScale";
 import { acceptsBossHit, getBoss, golemPlayerContact } from "../enemies/BossCatalog";
 import type { HitPoint } from "../enemies/BossCatalog";
 import type { BossSnapshot } from "../interface/RunData";
+import type { SoundEffectKey } from "../config/SoundEffects";
 
 export type BossAction =
-    | { type: "shot"; x: number; y: number; vx: number; vy: number; gravity?: number; size?: number; color?: number }
+    | { type: "shot"; x: number; y: number; vx: number; vy: number; gravity?: number; size?: number; color?: number; sound?: SoundEffectKey }
+    | { type: "sound"; key: SoundEffectKey }
     | { type: "hit" }
     | { type: "push"; vx: number; vy: number }
     | { type: "summon"; x: number; y: number };
@@ -110,12 +112,12 @@ export default class Boss {
         return actions;
     }
 
-    private aim(player: Phaser.Physics.Arcade.Body, actions: BossAction[], speed: number, gravity: number, size: number): void {
+    private aim(player: Phaser.Physics.Arcade.Body, actions: BossAction[], speed: number, gravity: number, size: number, sound: SoundEffectKey): void {
         const x = this.body.center.x;
         const y = this.body.center.y;
         const angle = Math.atan2(player.center.y - y, player.center.x - x);
         actions.push({ type: "shot", x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-            gravity, size, color: gravity ? 0xc9a36a : undefined });
+            gravity, size, color: gravity ? 0xc9a36a : undefined, sound });
     }
 
     private updateWorm(player: Phaser.Physics.Arcade.Body, actions: BossAction[]): void {
@@ -124,7 +126,10 @@ export default class Boss {
             if (this.state === "buried") {
                 this.state = "warning"; this.timer = this.phaseTwo() ? c.warningPhaseTwoMs : c.warningPhaseOneMs;
                 this.sprite.setPosition(player.center.x, this.groundY);
-            } else if (this.state === "warning") { this.state = "surface"; this.timer = c.surfaceMs; this.cooldown = c.firstSpitDelayMs; }
+            } else if (this.state === "warning") {
+                this.state = "surface"; this.timer = c.surfaceMs; this.cooldown = c.firstSpitDelayMs;
+                actions.push({ type: "sound", key: "wormEmerge" });
+            }
             else { this.state = "buried"; this.timer = this.phaseTwo() ? c.buriedPhaseTwoMs : c.buriedPhaseOneMs; }
         }
         const visible = this.state === "surface";
@@ -150,7 +155,7 @@ export default class Boss {
             const slowdown = speed > 0 ? Math.max(c.minimumSpeedWorld, speed - c.speedReduction * GAME_SCALE) / speed * c.speedMultiplier : 1;
             // Та же дуга при меньшей скорости: масштабируем и ускорение падения.
             actions.push({ type: "shot", x, y, vx: vx * slowdown, vy: vy * slowdown,
-                gravity: gravity * slowdown * slowdown, size: c.projectileSizeWorld, color: 0xc9a36a });
+                gravity: gravity * slowdown * slowdown, size: c.projectileSizeWorld, color: 0xc9a36a, sound: "wormStone" });
             this.cooldown = c.spitCooldownMs;
         }
         this.hint.setText(visible ? "Уязвима голова — прыгайте и стреляйте выше" : "Трещины показывают место появления — отойдите");
@@ -168,7 +173,7 @@ export default class Boss {
                     const y = this.groundY - c.lowRocketHeightWorld;
                     const angle = Math.atan2(Math.max(player.center.y, y + c.lowTargetDropWorld) - y, player.center.x - x);
                     actions.push({ type: "shot", x, y, vx: Math.cos(angle) * c.lowRocketSpeed * GAME_SCALE,
-                        vy: Math.sin(angle) * c.lowRocketSpeed * GAME_SCALE, color: 0xffa84c, size: c.rocketSizeWorld });
+                        vy: Math.sin(angle) * c.lowRocketSpeed * GAME_SCALE, color: 0xffa84c, size: c.rocketSizeWorld, sound: "tankRocket" });
                 } else {
                     const vy = c.upperLaunchSpeedY * GAME_SCALE;
                     const gravity = c.upperGravity * GAME_SCALE;
@@ -176,7 +181,7 @@ export default class Boss {
                     const targetX = Phaser.Math.Clamp(player.center.x + player.velocity.x * c.predictionSec, c.targetEdgeMarginWorld, this.width - c.targetEdgeMarginWorld);
                     actions.push({ type: "shot", x: this.body.center.x, y: this.body.top,
                         vx: (targetX - this.body.center.x) / flightTime * c.upperSpeedMultiplier, vy: vy * c.upperSpeedMultiplier,
-                        gravity: gravity * c.upperSpeedMultiplier ** 2, color: 0xffa84c, size: c.rocketSizeWorld });
+                        gravity: gravity * c.upperSpeedMultiplier ** 2, color: 0xffa84c, size: c.rocketSizeWorld, sound: "tankRocket" });
                 }
                 this.cooldown = c.rocketCooldownMs;
             }
@@ -187,7 +192,7 @@ export default class Boss {
                 const x = this.body.center.x + this.facing * (this.body.halfWidth + c.muzzleOffsetWorld);
                 const y = this.groundY - c.bulletHeightWorld;
                 const angle = Math.atan2(player.center.y - y, player.center.x - x);
-                actions.push({ type: "shot", x, y, vx: Math.cos(angle) * c.bulletSpeed * GAME_SCALE, vy: Math.sin(angle) * c.bulletSpeed * GAME_SCALE });
+                actions.push({ type: "shot", x, y, vx: Math.cos(angle) * c.bulletSpeed * GAME_SCALE, vy: Math.sin(angle) * c.bulletSpeed * GAME_SCALE, sound: "tankShot" });
                 this.burst--; this.burstTimer = c.bulletIntervalMs;
             }
         }
@@ -210,6 +215,7 @@ export default class Boss {
             if (this.state === "guard") { this.state = "windup"; this.timer = c.windupMs; }
             else if (this.state === "windup") {
                 this.state = "strike"; this.timer = c.strikeMs;
+                actions.push({ type: "sound", key: this.phaseTwo() ? "varxSwingPhaseTwo" : "varxSwing" });
                 if (Math.abs(dx) < c.strikeDistanceWorld && Math.abs(player.center.y - this.body.center.y) < c.strikeVerticalDistanceWorld) actions.push({ type: "hit" });
                 if (this.phaseTwo() && Math.abs(dx) < c.pushDistanceWorld) actions.push({ type: "push", vx: Math.sign(dx || this.facing) * c.pushVelocityXWorld, vy: c.pushVelocityYWorld });
             } else if (this.state === "strike") { this.state = "recovery"; this.timer = c.recoveryMs; }
@@ -283,14 +289,14 @@ export default class Boss {
             else {
                 this.state = "walk"; this.timer = this.phaseTwo() ? c.walkPhaseTwoMs : c.walkPhaseOneMs;
                 for (const direction of c.waveDirections) actions.push({ type: "shot", x: this.sprite.x + direction * (this.body.halfWidth + c.waveMuzzleOffsetWorld),
-                    y: this.groundY - c.waveHeightWorld, vx: direction * (this.phaseTwo() ? c.waveSpeedPhaseTwo : c.waveSpeedPhaseOne) * GAME_SCALE, vy: 0, size: c.waveSizeWorld, color: 0xffa84c });
+                    y: this.groundY - c.waveHeightWorld, vx: direction * (this.phaseTwo() ? c.waveSpeedPhaseTwo : c.waveSpeedPhaseOne) * GAME_SCALE, vy: 0, size: c.waveSizeWorld, color: 0xffa84c, sound: "golemWave" });
             }
         }
         if (this.phaseTwo()) {
             if (this.debrisCooldown === null) this.debrisCooldown = c.initialWalkPhaseTwoMs;
             else this.debrisCooldown -= delta;
             if (this.debrisCooldown <= 0) {
-                this.aim(player, actions, c.debrisSpeed * GAME_SCALE, c.debrisGravity * GAME_SCALE, c.debrisSizeWorld);
+                this.aim(player, actions, c.debrisSpeed * GAME_SCALE, c.debrisGravity * GAME_SCALE, c.debrisSizeWorld, "golemDebris");
                 this.debrisCooldown = c.debrisCooldownMs;
             }
             this.summonCooldown -= delta;

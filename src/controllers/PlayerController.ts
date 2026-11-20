@@ -12,12 +12,17 @@ import rules from "../data/rules.json";
 import heroes from "../data/heroes.json";
 import Projectile from "../gameObjects/Projectile";
 import { GAME_SCALE } from "../config/GameScale";
+import type { SoundEffectKey } from "../config/SoundEffects";
 
 export default class PlayerController {
     private readonly scene: Phaser.Scene;
     private readonly settings: SettingsManager;
     private readonly enemies: EnemyManager;
     private readonly character: HeroDefinition;
+    private readonly onEffect: (key: SoundEffectKey) => void;
+    private wasGrounded = false;
+    private hasGroundContact = false;
+    private stepCooldown = 0;
     private hero: Hero | null = null;
     private keys: Record<string, Phaser.Input.Keyboard.Key> = {};
     private health = rules.lives;
@@ -30,11 +35,13 @@ export default class PlayerController {
     private knockback = 0;
     private readonly pointerAttack: (pointer: Phaser.Input.Pointer) => void;
 
-    constructor(scene: Phaser.Scene, settings: SettingsManager, enemies: EnemyManager, character: HeroDefinition) {
+    constructor(scene: Phaser.Scene, settings: SettingsManager, enemies: EnemyManager, character: HeroDefinition,
+        onEffect: (key: SoundEffectKey) => void = () => {}) {
         this.scene = scene;
         this.settings = settings;
         this.enemies = enemies;
         this.character = { ...character };
+        this.onEffect = onEffect;
         this.pointerAttack = pointer => {
             if (!this.active || !this.hero || !pointer.leftButtonDown() || pointer.worldY <= 90) return;
             const keys = this.settings.getSettings().keys;
@@ -56,6 +63,7 @@ export default class PlayerController {
         this.invulnerability = 500;
         this.hitFlash = 0;
         this.damageFlag = false;
+        this.resetMovementSounds();
         const bindings = this.settings.getSettings().keys;
         this.keys = this.scene.input.keyboard!.addKeys(Object.fromEntries(
             Object.entries(bindings).filter(([binding, value]) => !binding.startsWith("pause") && value && value !== "MOUSE_LEFT")
@@ -70,7 +78,10 @@ export default class PlayerController {
 
     public getHealth(): number { return this.health; }
     public getCharacterId(): string { return this.character.id; }
-    public moveTo(x: number, y: number): void { this.getBody().reset(x, y); }
+    public moveTo(x: number, y: number): void {
+        this.getBody().reset(x, y);
+        this.resetMovementSounds();
+    }
     public setActive(active: boolean): void { this.active = active; }
 
     // Сюда будут передаваться подтверждённые попадания, а не нажатия клавиши атаки.
@@ -80,8 +91,11 @@ export default class PlayerController {
 
     public stompEnemy(enemy: ManagedEnemy): void {
         if (!this.active) return;
+        const previousHealth = enemy.getHealth();
         this.hitEnemy(enemy, true, { x: this.getBody().center.x, y: this.getBody().bottom });
+        if (enemy.getHealth() < previousHealth) this.onEffect("playerStomp");
         this.getBody().setVelocityY(-420 * GAME_SCALE);
+        this.wasGrounded = false;
         this.invulnerability = Math.max(this.invulnerability, 200);
     }
 
@@ -96,6 +110,7 @@ export default class PlayerController {
             "playerBullet", heroes.rules.blaster.speedPxPerSec * GAME_SCALE * facing, 0, heroes.rules.blaster.rangePx * GAME_SCALE);
         this.shots.push(shot);
         this.enemies.registerPlayerShot(shot, (enemy, hit) => this.hitEnemy(enemy, false, hit));
+        this.onEffect("playerShot");
     }
 
     public push(vx: number, vy: number): void {
@@ -105,17 +120,19 @@ export default class PlayerController {
     }
 
     public takeDamage(amount: number): void {
-        if (this.active && this.invulnerability <= 0 && Number.isFinite(amount) && amount > 0) {
+        if (this.active && this.health > 0 && this.invulnerability <= 0 && Number.isFinite(amount) && amount > 0) {
             this.health = Math.max(0, this.health - amount);
             this.invulnerability = 1000;
             this.hitFlash = 360;
             this.hero?.setHitFlash(true);
             this.damageFlag = true;
+            this.onEffect(amount === 0.5 ? "playerHurtBoss" : "playerHurt");
         }
     }
 
     public update(delta: number): void {
         if (!this.active || !this.hero) return;
+        this.updateMovementSounds(delta);
         this.cooldown = Math.max(0, this.cooldown - delta);
         this.invulnerability = Math.max(0, this.invulnerability - delta);
         this.hero.setInvulnerable(this.invulnerability > 0);
@@ -149,8 +166,37 @@ export default class PlayerController {
     private jump(): void {
         if (!this.active || !this.hero) return;
         const body = this.hero.getBody();
+        if (!body.onFloor() || body.velocity.y !== 0) return;
         const movement = getHeroMovement(this.character);
         this.hero.jump(getJumpVelocity(movement.jumpHeight, body.world.gravity.y + body.gravity.y));
+        this.hasGroundContact = true;
+        this.wasGrounded = false;
+        this.onEffect("playerJump");
+    }
+
+    private resetMovementSounds(): void {
+        this.wasGrounded = false;
+        this.hasGroundContact = false;
+        this.stepCooldown = 0;
+    }
+
+    private updateMovementSounds(delta: number): void {
+        const body = this.getBody();
+        const grounded = body.onFloor() && body.velocity.y === 0;
+        this.stepCooldown = Math.max(0, this.stepCooldown - delta);
+        // Первое касание земли после появления/перехода экрана не считается приземлением.
+        if (grounded && !this.wasGrounded && this.hasGroundContact) {
+            this.onEffect("playerLand");
+            this.stepCooldown = 300;
+        }
+        if (grounded) this.hasGroundContact = true;
+        // Проверяем фактическое смещение, чтобы не звучать при упоре в стену.
+        if (grounded && Math.abs(body.x - body.prev.x) > 0.1 && this.stepCooldown === 0) {
+            this.onEffect("playerStep");
+            this.stepCooldown = 300;
+        }
+        if (!grounded) this.stepCooldown = 0;
+        this.wasGrounded = grounded;
     }
 
     public destroy(): void {

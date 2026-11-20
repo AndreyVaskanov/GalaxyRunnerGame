@@ -8,6 +8,7 @@ import type { EpisodeMapEntry } from "../interface/EpisodeMapEntry";
 import bosses from "../data/bosses.json";
 import rules from "../data/rules.json";
 import type { ControlBinding } from "../config/Controls";
+import type { UiSoundKey } from "../config/SoundEffects";
 
 const episodeScenes = ["Desert1", "Ice2", "Station3", "Junk4"];
 const locations: Record<string, string> = {
@@ -34,6 +35,11 @@ export default class SceneManager {
         return SceneManager.sceneManager;
     }
 
+    public static preloadUiSounds(scene: Phaser.Scene): void { appServices.audio.preloadEffects(scene, true); }
+    public static playUiSound(key: UiSoundKey): void { appServices.audio.playEffect(key); }
+    public static preloadMenuMusic(scene: Phaser.Scene): void { appServices.audio.preloadMusic(scene); }
+    public static playMenuMusic(): void { appServices.audio.playMenuMusic(); }
+
     public static showScene(from: string, to: string): void {
         if (from === to) return;
         if (SceneManager.gameSceneKey === from) {
@@ -42,6 +48,7 @@ export default class SceneManager {
         }
         SceneManager.sceneManager.stop(from);
         SceneManager.sceneManager.start(to);
+        if (!episodeScenes.includes(to)) SceneManager.playMenuMusic();
     }
 
     public static restartGame(): void {
@@ -89,6 +96,7 @@ export default class SceneManager {
             return {
                 id: episode.episode, name: episode.name, location: locations[episode.biome],
                 bossName: bosses.bosses[episode.boss as keyof typeof bosses.bosses].name,
+                bossType: episode.boss,
                 stars: progress.stars[String(episode.episode)] ?? 0,
                 unlocked: progress.unlockedEpisodes.includes(episode.episode),
                 heroAllowed: !episode.heroOnly || episode.heroOnly === hero.id,
@@ -121,6 +129,7 @@ export default class SceneManager {
         SceneManager.sceneManager.stop("Pause");
         SceneManager.sceneManager.stop(key);
         SceneManager.sceneManager.start("EpisodeComplete", { result });
+        SceneManager.playMenuMusic();
     }
 
     public static showGameOver(): void {
@@ -155,6 +164,7 @@ export default class SceneManager {
     public static showShop(from: string): void {
         SceneManager.sceneManager.stop(from);
         SceneManager.sceneManager.start("Shop", { returnTo: from });
+        SceneManager.playMenuMusic();
     }
 
     public static pauseGame(): void {
@@ -163,6 +173,7 @@ export default class SceneManager {
         if (!game || !key || game.getState() !== GameState.Play) return;
         game.pause();
         if (game.getState() !== GameState.Pause) return;
+        SceneManager.playUiSound("uiPause");
         // Пауза всей сцены останавливает также её таймеры, tweens и update.
         SceneManager.sceneManager.pause(key);
         SceneManager.sceneManager.run("Pause");
@@ -173,6 +184,7 @@ export default class SceneManager {
         const game = SceneManager.gameManager;
         const key = SceneManager.gameSceneKey;
         if (!game || !key || game.getState() !== GameState.Pause) return;
+        SceneManager.playUiSound("uiPause");
         game.resume();
         SceneManager.sceneManager.stop("Pause");
         SceneManager.sceneManager.resume(key);
