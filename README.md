@@ -6,7 +6,7 @@
 
 ## Запуск через Docker
 
-Установите и запустите [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+Установите и запустите Docker Desktop.
 
 В папке проекта выполните:
 
@@ -16,7 +16,7 @@ docker compose up --build -d
 
 Команда соберёт игру и запустит контейнер с Nginx. 
 
-Игра будет доступна по адресу [http://localhost:8080](http://localhost:8080).
+Игра будет доступна по адресу http://localhost:8080
 
 После изменения исходников пересоберите игру командой `docker compose up --build -d`.
 
@@ -36,9 +36,9 @@ npm run deploy
 
 Команда собирает игру и отправляет содержимое `dist` в ветку `gh-pages`. Если ветки нет, она создаётся автоматически.
 
-В настройках репозитория **Settings → Pages** выберите **Deploy from a branch**, ветку **gh-pages** и папку **/ (root)**, затем нажмите **Save**. Поле **Custom domain** оставьте пустым.
+В настройках репозитория **Settings → Pages** выберите **Deploy from a branch**, ветку **gh-pages** и папку **/ (root)**, затем нажмите **Save**.
 
-Игра будет доступна по адресу `https://USERNAME.github.io/GalaxyRunnerGame/`, где `USERNAME` — имя пользователя GitHub.
+Игра будет доступна по адресу `https://USERNAME.github.io/GalaxyRunnerGame/`
 
 ## Публикация на GitHub Pages со своим доменом
 
