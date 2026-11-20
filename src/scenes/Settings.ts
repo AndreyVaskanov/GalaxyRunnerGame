@@ -192,7 +192,7 @@ export default class Settings extends Phaser.Scene {
         const panel = this.add.graphics().fillStyle(0x141432).lineStyle(3, 0xa8a8a8);
         panel.fillRoundedRect(510, 277.5, 900, 525, 15).strokeRoundedRect(510, 277.5, 900, 525, 15);
         modal.add(panel);
-        modal.add(this.add.text(570, 330, "СБРОСИТЬ НАСТРОЙКИ?", {
+        modal.add(this.add.text(570, 330, "ВЫ УВЕРЕНЫ, ЧТО ХОТИТЕ\nСБРОСИТЬ НАСТРОЙКИ?", {
             fontFamily: "'Press Start 2P'", fontSize: "30px", color: "#F2C94C"
         }));
         modal.add(this.add.text(570, 440, "Назначения клавиш вернутся к исходным.\nГромкость музыки — 70%, звуков — 80%.", {

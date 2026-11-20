@@ -18,7 +18,7 @@ export default class GameHud {
     constructor(scene: Phaser.Scene, heroName: string) {
         this.scene = scene;
         const style = { fontFamily: "Rubik", fontSize: "30px", color: "#FFFFFF" };
-        scene.add.rectangle(0, 0, 1920, 90, 0x080d17, 0.9).setOrigin(0).setDepth(100);
+        scene.add.rectangle(0, 0, 1920, 90, 0x080d17, 0.8).setOrigin(0).setDepth(100);
         scene.add.image(48, 45, "heart").setDisplaySize(36, 36).setDepth(101);
         this.health = scene.add.text(80, 45, "", style).setOrigin(0, 0.5).setDepth(101);
         scene.add.image(175, 45, "crystal").setDisplaySize(30, 42).setDepth(101);

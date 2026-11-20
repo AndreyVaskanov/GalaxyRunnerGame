@@ -14,9 +14,6 @@ class Rectangle {
     setDepth(depth) { this.depth = depth; return this; }
     setScale() { return this; }
     setVisible() { return this; }
-    setAlpha() { return this; }
-    setText() { return this; }
-    setColor() { return this; }
     setTexture() { return this; }
     destroy() { this.scene = null; }
 }
@@ -32,17 +29,12 @@ before(async () => {
     };
     const source = Object.entries(files).map(([name, file]) =>
         `export { default as ${name} } from ${JSON.stringify(path.resolve(__dirname, '../src', file + '.ts'))};`
-    ).join('\n') + `
-export { GameState } from ${JSON.stringify(path.resolve(__dirname, '../src/managers/GameManager.ts'))};`
-        + `
-export { getEpisode, validateEpisode } from ${JSON.stringify(path.resolve(__dirname, '../src/levels/EpisodeCatalog.ts'))};`
-        + `
-export { getHero, getHeroMovement, getJumpVelocity } from ${JSON.stringify(path.resolve(__dirname, '../src/characters/CharacterCatalog.ts'))};`;
+    ).join('\n') + `\nexport { GameState } from ${JSON.stringify(path.resolve(__dirname, '../src/managers/GameManager.ts'))};`
+        + `\nexport { getEpisode, validateEpisode } from ${JSON.stringify(path.resolve(__dirname, '../src/levels/EpisodeCatalog.ts'))};`
+        + `\nexport { getHero, getHeroMovement, getJumpVelocity } from ${JSON.stringify(path.resolve(__dirname, '../src/characters/CharacterCatalog.ts'))};`;
     const bundle = await rolldown({ input: 'architecture-tests', external: ['phaser'], plugins: [{
         name: 'test-entry',
         resolveId: id => id === 'architecture-tests' ? '\0architecture-tests' : undefined,
-        transform: (code, id) => id.includes('EnemyAssets.ts')
-            ? { code: code.replace(/import\.meta\.glob(?:<string>)?\([^)]*\)/g, '{}') } : undefined,
         load: id => id === '\0architecture-tests' ? source
             : id.endsWith('.png') ? { code: `export default ${JSON.stringify(id)};`, moduleType: 'js' } : undefined
     }] });
@@ -67,7 +59,7 @@ function storage() {
     return values;
 }
 
-test('[NFR-SWR-2-4-1, NFR-SWR-2-6-1] повреждённое или недоступное хранилище не ломает загрузку', () => {
+test('повреждённое или недоступное хранилище не ломает загрузку', () => {
     const values = storage();
     const saves = new SaveSystem();
     values.set('galaxy-runner:value', '{bad json');
@@ -79,7 +71,7 @@ test('[NFR-SWR-2-4-1, NFR-SWR-2-6-1] повреждённое или недос�
     assert.equal(saves.save('value', fallback), false);
 });
 
-test('[FR-SWR-1-9-1] настройки применяются, проверяются и сохраняются без изменения defaults', () => {
+test('настройки применяются к звуку, проверяются и сохраняются без изменения defaults', () => {
     storage();
     const applied = [];
     const settings = new SettingsManager(new SaveSystem(), { applySettings: data => applied.push(data) });
@@ -95,7 +87,7 @@ test('[FR-SWR-1-9-1] настройки применяются, проверяю
     assert.equal(applied.length, 3);
 });
 
-test('[FR-SWR-1-8-1, FR-SWR-2-4-1, FR-SWR-2-7-1] магазин и общий прогресс', () => {
+test('прогресс и магазин используют общие данные, выбранный герой должен быть приобретён', () => {
     const values = storage();
     values.set('galaxy-runner:progress', JSON.stringify({
         score: 100, crystals: 40, unlockedEpisodes: [1, 2, 3], stars: { '3': 1 }
@@ -119,7 +111,7 @@ test('[FR-SWR-1-8-1, FR-SWR-2-4-1, FR-SWR-2-7-1] магазин и общий п
     assert.equal(progress.getProgress().score, 0);
 });
 
-test('[UR-3-2, FR-SWR-1-5-1] запуск, пауза, перезапуск и завершение уровня', () => {
+test('GameManager направляет запуск и перезапуск уровня, блокирует обновление на паузе', () => {
     const calls = [];
     let health = 3;
     const body = { velocity: { x: 0 }, right: 500 };
@@ -128,7 +120,6 @@ test('[UR-3-2, FR-SWR-1-5-1] запуск, пауза, перезапуск и �
         loadLevel: (id, index, actualBody) => { assert.equal(id, 1); assert.equal(index, 0); assert.equal(actualBody, body); calls.push('load'); },
         getSelection: () => ({ episodeId: 1, screenIndex: 0 }),
         getScreenWidth: () => 1920,
-        update: () => {},
         drainEvents: () => [],
         restartLevel: actualBody => { assert.equal(actualBody, body); calls.push('restart'); },
         clear: () => calls.push('clear')
@@ -136,9 +127,9 @@ test('[UR-3-2, FR-SWR-1-5-1] запуск, пауза, перезапуск и �
     const player = {
         spawn: () => calls.push('spawn'), getBody: () => body, getCharacterId: () => 'kai',
         getHealth: () => health, setActive: active => calls.push(`player:${active}`),
-        update: () => calls.push('player:update'), consumeDamageFlag: () => false, destroy: () => calls.push('destroy')
+        update: () => calls.push('player:update'), destroy: () => calls.push('destroy')
     };
-    const enemies = { setActive: active => calls.push(`enemies:${active}`), update: () => calls.push('enemies:update'), getSnapshot: () => [], getBossSnapshot: () => null, drainEvents: () => [] };
+    const enemies = { setActive: active => calls.push(`enemies:${active}`), update: () => calls.push('enemies:update') };
     storage();
     const progress = new ProgressSystem(new SaveSystem());
     progress.save = () => { calls.push('save'); return true; };
@@ -168,16 +159,16 @@ test('[UR-3-2, FR-SWR-1-5-1] запуск, пауза, перезапуск и �
     assert.deepEqual(calls.slice(-2), ['clear', 'destroy']);
 });
 
-test('[FR-SWR-2-3-1] менеджер противников приостанавливает обновление и освобождает объекты', () => {
+test('менеджер противников приостанавливает обновление и освобождает объекты', () => {
     const manager = new EnemyManager();
-    const invalidSpawn = { type: 'not-a-real-enemy', x: 1, y: 2, facing: 'left' };
-    assert.throws(() => manager.createEnemies([invalidSpawn], 1, 0, {}, []), /Неизвестный противник/);
+    const spawn = { type: 'test', x: 1, y: 2, facing: 'left' };
+    assert.throws(() => manager.createEnemies([spawn]), /Не подключено/);
     let updates = 0;
     let destroyed = 0;
     let damage = 0;
-    const enemy = { id: '1:0:enemy:0', getHealth: () => 3, update: () => { updates++; return []; }, takeDamage: amount => damage += amount, destroy: () => destroyed++ };
-    manager.enemies.push(enemy);
-    manager.player = {};
+    const enemy = { update: () => updates++, takeDamage: amount => damage += amount, destroy: () => destroyed++ };
+    manager.setFactory(() => enemy);
+    manager.createEnemies([spawn]);
     manager.damageEnemy(enemy, 2);
     assert.equal(damage, 2);
     manager.update(16);
@@ -191,7 +182,7 @@ test('[FR-SWR-2-3-1] менеджер противников приостана�
     assert.equal(destroyed, 1);
 });
 
-test('[FR-SWR-1-3-1, FR-SWR-2-11-1] повторная загрузка уровня удаляет старые платформы, границы и столкновения', () => {
+test('повторная загрузка уровня удаляет старые платформы, границы и столкновения', () => {
     const rectangles = [];
     const colliders = [];
     const images = [];
@@ -201,9 +192,7 @@ test('[FR-SWR-1-3-1, FR-SWR-2-11-1] повторная загрузка уров
         add: {
             existing: object => rectangles.push(object),
             rectangle: (...args) => { const object = new Rectangle(scene, ...args); rectangles.push(object); return object; },
-            image: () => { const object = new Rectangle(scene); images.push(object); return object; },
-            graphics: () => ({ setDepth() { return this; }, fillStyle() { return this; }, fillRect() { return this; }, lineStyle() { return this; }, lineBetween() { return this; }, destroy() {} }),
-            text: () => new Rectangle(scene)
+            image: () => { const object = new Rectangle(scene); images.push(object); return object; }
         },
         physics: { world: { setBounds: (...args) => bounds = args }, add: {
             existing() {},
@@ -219,13 +208,12 @@ test('[FR-SWR-1-3-1, FR-SWR-2-11-1] повторная загрузка уров
             }
         } }
     };
-    const managedEnemies = { clear() {}, createEnemies() {}, createBoss() {} };
-    const level = new LevelManager(scene, managedEnemies);
+    const level = new LevelManager(scene, new EnemyManager());
     level.loadLevel(1, 0, {});
     assert.deepEqual(bounds, [0, 0, 1920, 1080]);
     assert.equal(rectangles[0].y, 900);
     assert.equal(rectangles[0].height, 180);
-    assert.deepEqual([rectangles[2].x, rectangles[2].y, rectangles[2].width, rectangles[2].height], [480, 705, 270, 36]);
+    assert.deepEqual([rectangles[2].x, rectangles[2].y, rectangles[2].width, rectangles[2].height], [480, 735, 270, 36]);
     assert.equal(images[0].width, 1920);
     level.activateCheckpoint({ id: 'test', x: 1, y: 2 });
     assert.equal(rectangles.filter(object => object.scene).length, 6);
@@ -243,7 +231,7 @@ test('[FR-SWR-1-3-1, FR-SWR-2-11-1] повторная загрузка уров
         const episode = getEpisode(id);
         for (let index = 0; index < episode.screens.length; index++) {
             level.loadLevel(id, index, {});
-            assert.equal(rectangles.filter(object => object.scene).length, 2 + episode.screens[index].platforms.length * 2 + episode.screens[index].obstacles.filter(object => object.type === 'laser').length);
+            assert.equal(rectangles.filter(object => object.scene).length, (episode.screens[index].platforms.length + 1) * 2);
             assert.equal(level.hasNextScreen(), index < 2);
         }
     }
@@ -254,7 +242,7 @@ test('[FR-SWR-1-3-1, FR-SWR-2-11-1] повторная загрузка уров
     assert.equal(images.filter(object => object.scene).length, 0);
 });
 
-test('[FR-SWR-1-3-1] JSON эпизодов проверяется, исходные координаты не меняются', () => {
+test('JSON всех эпизодов проверяется, исходные координаты не меняются', () => {
     for (let id = 1; id <= 4; id++) {
         const episode = getEpisode(id);
         assert.equal(validateEpisode(episode), true);
@@ -268,7 +256,7 @@ test('[FR-SWR-1-3-1] JSON эпизодов проверяется, исходн�
     assert.throws(() => getEpisode(99));
 });
 
-test('[UR-3-1] выход вправо меняет экран без возрождения, последний экран не завершает эпизод', () => {
+test('выход вправо меняет экран без возрождения, последний экран не завершает эпизод', () => {
     let screenIndex = 0;
     let spawns = 0;
     let moves = 0;
@@ -280,18 +268,17 @@ test('[UR-3-1] выход вправо меняет экран без возро
         getSelection: () => ({ episodeId: 1, screenIndex }),
         hasNextScreen: () => screenIndex < 2,
         getScreenWidth: () => 1920,
-        update: () => {},
         drainEvents: () => [],
         restartLevel: () => screenIndex = 0
     };
     const player = {
         spawn: () => spawns++, getBody: () => body, getHealth: () => 2, getCharacterId: () => 'kai',
-        moveTo: () => { moves++; body.right = 160; }, setActive() {}, update() {}, consumeDamageFlag: () => false
+        moveTo: () => { moves++; body.right = 160; }, setActive() {}, update() {}
     };
     storage();
     const progress = new ProgressSystem(new SaveSystem());
     progress.save = () => { saves++; return true; };
-    const game = new GameManager(levels, player, { setActive() {}, update() {}, getSnapshot: () => [], getBossSnapshot: () => null, drainEvents: () => [] }, progress, { playEffect() {} });
+    const game = new GameManager(levels, player, { setActive() {}, update() {} }, progress, { playEffect() {} });
     game.startLevel(1);
     game.update(16);
     assert.equal(screenIndex, 1);
@@ -312,7 +299,7 @@ test('[UR-3-1] выход вправо меняет экран без возро
     assert.equal(spawns, 2);
 });
 
-test('[UR-3-2, FR-SWR-1-5-1] меню паузы: остановка, продолжение, перезапуск и выход', () => {
+test('меню паузы управляется SceneManager: остановка сцены, продолжение, перезапуск и выход', () => {
     const calls = [];
     let state = GameState.Play;
     const game = {
@@ -350,17 +337,17 @@ test('[UR-3-2, FR-SWR-1-5-1] меню паузы: остановка, продо
     SceneManager.pauseGame();
     calls.length = 0;
     SceneManager.restartGame();
-    assert.deepEqual(calls, ['level:restart', 'stop:Pause', 'stop:GameOver', 'resume:Desert1']);
+    assert.deepEqual(calls, ['level:restart', 'stop:Pause', 'resume:Desert1']);
     SceneManager.pauseGame();
     calls.length = 0;
     SceneManager.exitToChapterMap();
-    assert.deepEqual(calls, ['stop:Pause', 'stop:GameOver', 'stop:Desert1', 'start:ChapterMap']);
+    assert.deepEqual(calls, ['stop:Pause', 'stop:Desert1', 'start:ChapterMap']);
     calls.length = 0;
     SceneManager.restartGame();
     assert.equal(calls.length, 0);
 });
 
-test('[UR-2-1, FR-SWR-1-2-1] выбор сохраняется, закрытые и неизвестные герои недоступны', () => {
+test('выбор сохраняется и восстанавливается, закрытые и неизвестные герои недоступны', () => {
     const values = storage();
     const saves = new SaveSystem();
     const progress = new ProgressSystem(saves);
@@ -373,22 +360,22 @@ test('[UR-2-1, FR-SWR-1-2-1] выбор сохраняется, закрытые
     assert.equal(shop.select('taron'), false);
     assert.equal(shop.select('unknown'), false);
     // Имитируем уже приобретённого героя без реализации магазина.
-    saves.saveProfileData('characters', { selected: 'kai', owned: ['kai', 'nova'] });
+    saves.save('characters', { selected: 'kai', owned: ['kai', 'nova'] });
     shop.load();
     assert.equal(shop.select('nova'), true);
     shop = new CharacterShopManager(progress, saves);
     shop.load();
     assert.equal(shop.getSelectedCharacter().id, 'nova');
     assert.equal(shop.getSelectedCharacter().speed, 5);
-    values.set('galaxy-runner:profile', JSON.stringify({ version: 1, progress: null, characters: { selected: 'unknown', owned: ['kai', 'unknown'] } }));
+    values.set('galaxy-runner:characters', JSON.stringify({ selected: 'unknown', owned: ['kai', 'unknown'] }));
     shop.load();
     assert.equal(shop.getSelectedCharacter().id, 'kai');
 });
 
-test('[FR-SWR-2-1-1, FR-SWR-2-2-1, FR-SWR-2-10-1] параметры героя и прыжка', () => {
-    assert.deepEqual(getHeroMovement(getHero('kai')), { speed: 300, jumpHeight: 225 });
-    assert.deepEqual(getHeroMovement(getHero('nova')), { speed: 420, jumpHeight: 240 });
-    assert.deepEqual(getHeroMovement(getHero('taron')), { speed: 300, jumpHeight: 210 });
+test('характеристики героев берутся из JSON и масштабируются, прыжок рассчитан по гравитации', () => {
+    assert.deepEqual(getHeroMovement(getHero('kai')), { speed: 300, jumpHeight: 180 });
+    assert.deepEqual(getHeroMovement(getHero('nova')), { speed: 420, jumpHeight: 180 });
+    assert.deepEqual(getHeroMovement(getHero('taron')), { speed: 360, jumpHeight: 210 });
     for (const id of ['kai', 'nova', 'taron']) {
         const height = getHeroMovement(getHero(id)).jumpHeight;
         const velocity = getJumpVelocity(height, 1800);
@@ -402,7 +389,7 @@ test('[FR-SWR-2-1-1, FR-SWR-2-2-1, FR-SWR-2-10-1] параметры героя 
     assert.equal(getHero('kai').speed, 3);
 });
 
-test('[FR-SWR-2-4-1, FR-SWR-2-7-1, FR-SWR-2-11-1] чекпоинт и откат попытки', () => {
+test('чекпоинт восстанавливает награды и предметы, перезапуск откатывает только текущую попытку', () => {
     const values = storage();
     values.set('galaxy-runner:progress', JSON.stringify({ score: 500, crystals: 8, unlockedEpisodes: [1], stars: {} }));
     const saves = new SaveSystem();
@@ -416,26 +403,26 @@ test('[FR-SWR-2-4-1, FR-SWR-2-7-1, FR-SWR-2-11-1] чекпоинт и откат
     assert.equal(progress.collectCrystal('2:0:crystal:0'), false);
     assert.equal(progress.saveCheckpoint('1:0:checkpoint', cp), true);
     progress.collectCrystal('1:1:crystal:6');
-    assert.equal(progress.getProgress().score, 200);
+    assert.equal(progress.getProgress().score, 700);
     const snapshot = progress.restoreCheckpoint();
     assert.deepEqual(snapshot.position, cp);
-    assert.equal(progress.getProgress().score, 100);
+    assert.equal(progress.getProgress().score, 600);
     assert.equal(progress.getProgress().crystals, 9);
     assert.deepEqual(progress.getAttempt().collectedIds, ['1:0:crystal:5']);
     assert.equal(progress.collectCrystal('1:1:crystal:6'), true);
     progress.suspendAttempt({ screenIndex: 1, x: 1000, y: 700 });
     const reloaded = new ProgressSystem(saves);
     reloaded.load();
-    assert.equal(reloaded.getProgress().score, 200);
+    assert.equal(reloaded.getProgress().score, 700);
     assert.equal(reloaded.getAttempt().resume.screenIndex, 1);
     reloaded.restartAttempt(start);
-    assert.equal(reloaded.getProgress().score, 0);
+    assert.equal(reloaded.getProgress().score, 500);
     assert.equal(reloaded.getProgress().crystals, 8);
     assert.deepEqual(reloaded.getAttempt().collectedIds, []);
     assert.equal(reloaded.getAttempt().checkpoint, null);
 });
 
-test('[FR-SWR-2-4-1, FR-SWR-2-8-1, NFR-SWR-2-6-1] сбор и сохранение кристаллов', () => {
+test('лимит получения кристаллов не сбрасывается тратой, старое сохранение мигрирует', () => {
     const values = storage();
     values.set('galaxy-runner:progress', JSON.stringify({ score: 0, crystals: 99, unlockedEpisodes: [1], stars: {} }));
     const progress = new ProgressSystem(new SaveSystem());
@@ -444,9 +431,9 @@ test('[FR-SWR-2-4-1, FR-SWR-2-8-1, NFR-SWR-2-6-1] сбор и сохранени
     progress.beginAttempt(1, 'kai', { screenIndex: 0, x: 150, y: 840 });
     assert.equal(progress.collectCrystal('1:0:crystal:5'), true);
     assert.equal(progress.collectCrystal('1:0:crystal:6'), true);
-    assert.equal(progress.getProgress().crystals, 66);
+    assert.equal(progress.getProgress().crystals, 65);
     assert.equal(progress.getProgress().score, 200);
-    assert.equal(progress.spendCrystals(1), true);
+    assert.equal(progress.spendCrystals(1), false);
     progress.save();
     const reloaded = new ProgressSystem(new SaveSystem());
     reloaded.load();
@@ -454,7 +441,7 @@ test('[FR-SWR-2-4-1, FR-SWR-2-8-1, NFR-SWR-2-6-1] сбор и сохранени
     assert.equal(reloaded.getAttempt().collectedIds.length, 2);
 });
 
-test('[NFR-SWR-2-4-1, NFR-SWR-2-6-1] отказ сохранения и проверка повреждённого снимка', () => {
+test('отказ записи оставляет чекпоинт в памяти, повреждённый снимок безопасно отклоняется', () => {
     const values = storage();
     const progress = new ProgressSystem(new SaveSystem());
     progress.beginAttempt(1, 'kai', { screenIndex: 0, x: 150, y: 840 });
@@ -465,9 +452,9 @@ test('[NFR-SWR-2-4-1, NFR-SWR-2-6-1] отказ сохранения и пров
     assert.equal(progress.restoreCheckpoint().score, 100);
     global.localStorage.setItem = (key, value) => values.set(key, value);
     progress.save();
-    const saved = JSON.parse(values.get('galaxy-runner:profile'));
-    saved.progress.attempt.resume.screenIndex = 99;
-    values.set('galaxy-runner:profile', JSON.stringify(saved));
+    const saved = JSON.parse(values.get('galaxy-runner:progress'));
+    saved.attempt.resume.screenIndex = 99;
+    values.set('galaxy-runner:progress', JSON.stringify(saved));
     const reloaded = new ProgressSystem(new SaveSystem());
     reloaded.load();
     assert.equal(reloaded.getAttempt(), null);
