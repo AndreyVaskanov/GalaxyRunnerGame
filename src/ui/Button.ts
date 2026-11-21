@@ -43,7 +43,7 @@ export default class Button extends Phaser.GameObjects.Container {
         let text = isBack ? config.text.replace(/^←\s*/, "") : config.text
         let fontFamily = config.fontFamily ?? "Rubik"
         let fontSize = config.fontSize ?? 20
-        let textColor = isBack ? "#DCE5F2" : config.textColor ?? "#FFFFFF"
+        let textColor = config.textColor ?? (isBack ? "#DCE5F2" : "#FFFFFF")
 
         let backgroundColor = isOutlined ? 0x080d17 : config.backgroundColor ?? 0x000000
         let backgroundAlpha = isOutlined ? 1 : config.backgroundAlpha ?? 1

@@ -5,16 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "vitest run",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "qa:serve": "vite --host 127.0.0.1 --port 5190 --strictPort",
+    "qa:collect": "node qa/collector.mjs",
+    "qa:report": "node qa/report.mjs"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "typescript": "~7.0.2",
-    "vite": "^8.3.5",
-    "vitest": "^4.1.12"
+    "vite": "^8.3.5"
   },
   "dependencies": {
     "phaser": "^4.2.1",

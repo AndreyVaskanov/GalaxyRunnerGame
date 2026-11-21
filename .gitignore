@@ -7,3 +7,5 @@ PROJECT_CONTEXT.md
 Требования
 .vscode
 .idea
+/tests/
+~$*.xlsx

@@ -59,7 +59,7 @@ export default class MainMenu extends Phaser.Scene {
         }})
 
         let buttonHowToPlay = new Button(this, {
-            y: 130,
+            y: 120,
             width: 480,
             height: 90,
             fontSize: 27,
@@ -72,7 +72,7 @@ export default class MainMenu extends Phaser.Scene {
         }})
 
         let buttonShop = new Button(this, {
-            y: 260,
+            y: 240,
             width: 480,
             height: 90,
             fontSize: 27,
@@ -87,7 +87,7 @@ export default class MainMenu extends Phaser.Scene {
 
         let buttonSettings = new Button(this, {
             x: 0,
-            y: 390,
+            y: 360,
             width: 480,
             height: 90,
             fontSize: 27,
@@ -108,6 +108,7 @@ export default class MainMenu extends Phaser.Scene {
         smallHeader.setOrigin(0.5)
         smallHeader.setFontSize(18)
         smallHeader.setFontFamily("'Press Start 2P'")
+        smallHeader.setColor("#A8A8A8")
 
         let mainHeader = this.add.text(960, 260, "GALAXY RUNNER")
         mainHeader.setOrigin(0.5)
@@ -117,7 +118,9 @@ export default class MainMenu extends Phaser.Scene {
 
         let underHeader = this.add.text(960, 330, "Платформер в духе классики: беги, прыгай, сражайся")
         underHeader.setOrigin(0.5)
-        underHeader.setFontSize(27)
+        underHeader.setFontSize(24)
+        underHeader.setFontFamily("Rubik")
+        underHeader.setColor("#A8A8A8")
 
     }
 }

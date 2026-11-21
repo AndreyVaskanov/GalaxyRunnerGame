@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Button from "../ui/Button";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import SceneManager from "../managers/SceneManager";
 import type { EpisodeMapEntry } from "../interface/EpisodeMapEntry";
 import { preloadBoss } from "../enemies/EnemyAssets";
@@ -16,6 +17,7 @@ const episodeColors: Record<number, number> = {
 };
 
 export default class ChapterMap extends Phaser.Scene {
+    private exitDialog: ConfirmDialog | null = null;
     constructor() { super("ChapterMap"); }
 
     preload(): void {
@@ -36,7 +38,16 @@ export default class ChapterMap extends Phaser.Scene {
         };
         new Button(this, {
             x: 190, y: 55, width: 285, height: 48, variant: "back", text: "← Главное меню", fontSize: 24,
-            backgroundAlpha: 0, textColor: yellow, click: () => leave("MainMenu")
+            backgroundAlpha: 0, textColor: yellow, click: () => {
+                if (this.exitDialog) return;
+                this.exitDialog = new ConfirmDialog(this, {
+                    title: "ВЫЙТИ В ГЛАВНОЕ\nМЕНЮ?",
+                    message: "Вернуться в главное меню?\nПрогресс и покупки сохранятся.",
+                    confirmText: "Выйти",
+                    onConfirm: () => leave("MainMenu"),
+                    onClose: () => { this.exitDialog = null; }
+                });
+            }
         });
         new Button(this, {
             x: 190, y: 112, width: 285, height: 48, variant: "back", text: "← Сменить героя", fontSize: 24,
