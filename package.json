@@ -12,6 +12,7 @@
     "qa:collect": "node qa/collector.mjs",
     "qa:report": "node qa/report.mjs"
   },
+  
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "typescript": "~7.0.2",

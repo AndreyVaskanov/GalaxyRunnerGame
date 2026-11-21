@@ -459,4 +459,5 @@ test('отказ записи оставляет чекпоинт в памят�
     reloaded.load();
     assert.equal(reloaded.getAttempt(), null);
     assert.equal(reloaded.getProgress().score, 0);
+    
 });
