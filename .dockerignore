@@ -8,3 +8,6 @@ tests
 PROJECT_CONTEXT.md
 *.log
 *.local
+qa
+qa-results
+outputs

@@ -9,3 +9,4 @@ PROJECT_CONTEXT.md
 .idea
 /tests/
 ~$*.xlsx
+qa-results

@@ -1,21 +1,89 @@
 import fs from 'node:fs';
-const data=JSON.parse(fs.readFileSync('qa-results/browser.json','utf8'));
-const manifest=JSON.parse(fs.readFileSync('qa/manifest.json','utf8'));
-const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
-const tsconfig=JSON.parse(fs.readFileSync('tsconfig.json','utf8').replace(/\/\*[\s\S]*?\*\//g,''));
-const row=data.results.find(r=>r.id==='NFR-SWR-4-3-1');
-if(!row.checks.some(c=>c.name==='Дополнительные прямые библиотеки')){row.checks.push({name:'Дополнительные прямые библиотеки',result:Object.keys(pkg.dependencies).every(x=>['phaser','vite','phaser4-rex-plugins'].includes(x))?'Пройден':'Не пройден',observed:Object.keys(pkg.dependencies).join(', ')+'; rex UI — дополнительный функционал из PROJECT_CONTEXT.md, учтён по переписке команды'});row.status=row.checks.some(c=>c.result==='Не пройден')?'Не пройден':row.status;}
-const language=data.results.find(r=>r.id==='NFR-SWR-4-2-1');
-if(!language.checks.some(c=>c.name==='TypeScript ES6+'))language.checks.push({name:'TypeScript ES6+',result:pkg.devDependencies.typescript&&/es(202[0-9]|next)/i.test(tsconfig.compilerOptions.target)?'Пройден':'Не пройден',observed:`TypeScript ${pkg.devDependencies.typescript}; target ${tsconfig.compilerOptions.target}; module ${tsconfig.compilerOptions.module}`});
-data.dateMoscow=new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow'}).format(new Date(data.date));
-data.results.sort((a,b)=>a.id.localeCompare(b.id,'ru',{numeric:true}));
-for(const r of data.results){const m=manifest.find(m=>m.id===r.id);r.testId='t'+r.id;r.sourceSha256=m.sha256;r.scenario=m.scenario;r.source=m.source;r.comment=[r.title,...r.checks.filter(c=>c.result==='Не пройден').map(c=>c.name+(c.observed?': '+c.observed:'')),r.error?'Ошибка тестового запуска: '+r.error:'',r.limits].filter(Boolean).join('\n');}
-data.counts=Object.fromEntries([...new Set(data.results.map(r=>r.status))].map(s=>[s,data.results.filter(r=>r.status===s).length]));
-data.subchecks=data.results.flatMap(r=>r.checks.map(c=>({requirement:r.id,...c})));
-data.baseline='Основные FR/NFR/UR с явно согласованными уточнениями 20.11.2026 (qa/acceptance.json): бонус исключён, пороги −500, масштаб 1.5, дополнительные элементы интерфейса, rex UI, баланс противников, лимит текущего кошелька и сохранённое здоровье чекпоинта. Исходные сценарии сохранены.';
-data.userExclusions=['NFR-SWR-1-1-1','NFR-SWR-1-2-1'];
-fs.writeFileSync('qa-results/report.json',JSON.stringify(data,null,2));
-const e=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
-const html=`<!doctype html><html lang="ru"><meta charset="utf-8"><title>Результаты тестирования Galaxy Runner</title><style>body{font:16px 'Segoe UI',sans-serif;background:#f5f7fb;color:#20334a;margin:26px}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #d7e0e9;padding:12px;vertical-align:top;text-align:left}th{background:#006cb2;color:#fff}th{position:sticky;top:0}.bad{background:#ffe4e4}.ok{background:#ecf7f2}.na{background:#fff1ce}pre{white-space:pre-wrap;font:14px 'Segoe UI',sans-serif}p{line-height:1.55}img{max-width:900px;width:100%}summary{cursor:pointer}@media print{th{position:static}}</style><h1>Результаты тестирования Galaxy Runner</h1><p>Тестировщик: ${e(data.tester)}. Дата: ${e(data.dateMoscow)}. Версия ПО: ${e(data.build.version)}. Git: ${e(data.build.commit.slice(0,7))}.</p><p><b>${Object.entries(data.counts).map(([s,n])=>e(s)+': '+n).join('; ')}.</b> Всего требований: 40. Отчёт и презентация исключены пользователем. По согласованию пользователя используется имеющийся браузер; отдельная проверка Google Chrome не заявляется.</p><p><b>Объём:</b> выполнены интеграционные тесты реальных сцен и физики, проверки данных и сохранения, подготовлены тестовые состояния. Это не утверждение о полном ручном прохождении всех сценариев и всех боссов. «Пройден» относится к перечисленным проверкам; ограничения указаны в комментариях. Исходные файлы сценариев не изменены.</p><p>${e(data.baseline)} Размеры UI сопоставлены с логическим масштабом 1.5 (1280×720 → 1920×1080); не все геометрические параметры измерены. Источник: текущий локальный проект ${e(data.target)}, не опубликованный сайт.</p><p>Браузер: ${e(data.browser)}. Viewport ${data.viewport.width}×${data.viewport.height}; Canvas ${data.canvas.width}×${data.canvas.height}. SHA-256 исходного кода: ${e(data.build.sourceSha256)}.</p><p>Повторный запуск: <code>npm run qa:serve</code> и <code>npm run qa:collect</code>, открыть <code>/qa/browser.html</code> на порту 5190, нажать «Запустить проверки», затем <code>npm run qa:report</code>.</p><table><thead><tr><th>Тестировщик</th><th>Дата</th><th>Версия ПО</th><th>Тестовая процедура</th><th>Результат</th><th>Комментарий</th></tr></thead><tbody>${data.results.map(r=>`<tr><td>${e(data.tester)}</td><td>${e(data.dateMoscow)}</td><td>${e(data.build.version)}<br>${e(data.build.commit.slice(0,7))}</td><td>${e(r.testId)}<br>${e(r.title)}</td><td class="${r.status==='Не пройден'?'bad':r.status==='Пройден'?'ok':'na'}">${e(r.status)}</td><td><pre>${e(r.comment)}</pre><details><summary>Все проверки (${r.checks.length})</summary>${r.checks.map(c=>`<p>${e(c.result)} — ${e(c.name)}${c.observed?': '+e(c.observed):''}</p>`).join('')}${r.evidence?'<img src="'+e(r.evidence)+'" alt="Сцена во время проверки">':''}</details></td></tr>`).join('')}</tbody></table></html>`;
-fs.writeFileSync('qa-results/requirements.html',html);
-console.log(JSON.stringify({requirements:data.results.length,checks:data.subchecks.length,counts:data.counts},null,2));
+
+const directory = 'qa-results';
+const data = JSON.parse(fs.readFileSync(`${directory}/browser.json`, 'utf8'));
+const manifest = JSON.parse(fs.readFileSync('qa/manifest.json', 'utf8'));
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const tsconfig = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''));
+
+function addCheck(id, check) {
+    const row = data.results.find(result => result.id === id);
+    if (!row || row.checks.some(existing => existing.name === check.name)) return;
+    row.checks.push(check);
+    if (row.checks.some(item => item.result === 'Не пройден')) row.status = 'Не пройден';
+}
+
+addCheck('NFR-SWR-4-3-1', {
+    name: 'Состав прямых зависимостей',
+    result: Object.keys(pkg.dependencies).every(name => ['phaser', 'vite', 'phaser4-rex-plugins'].includes(name)) ? 'Пройден' : 'Не пройден',
+    observed: Object.keys(pkg.dependencies).join(', ')
+});
+addCheck('NFR-SWR-4-2-1', {
+    name: 'TypeScript ES6+',
+    result: pkg.devDependencies.typescript && /es(202[0-9]|next)/i.test(tsconfig.compilerOptions.target) ? 'Пройден' : 'Не пройден',
+    observed: `TypeScript ${pkg.devDependencies.typescript}; target ${tsconfig.compilerOptions.target}; module ${tsconfig.compilerOptions.module}`
+});
+
+data.dateMoscow = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow', dateStyle: 'short', timeStyle: 'medium'
+}).format(new Date(data.date));
+data.results.sort((a, b) => a.id.localeCompare(b.id, 'ru', { numeric: true }));
+data.counts = {};
+for (const row of data.results) {
+    row.title = manifest.find(item => item.id === row.id)?.title ?? row.title;
+    row.comment = [
+        ...row.checks.filter(check => check.result === 'Не пройден')
+            .map(check => `${check.name}${check.observed ? `: ${check.observed}` : ''}`),
+        row.error ? `Ошибка выполнения: ${row.error}` : '',
+        row.limits
+    ].filter(Boolean).join('\n');
+    data.counts[row.status] = (data.counts[row.status] ?? 0) + 1;
+}
+data.subchecks = data.results.flatMap(row => row.checks.map(check => ({ requirement: row.id, ...check })));
+data.reportGeneratedAt = new Date().toISOString();
+fs.writeFileSync(`${directory}/report.json`, JSON.stringify(data, null, 2) + '\n');
+
+const escape = value => String(value ?? '').replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+const rows = data.results.map(row => `
+    <tr>
+        <td>${escape(row.id)}<br>${escape(row.title)}</td>
+        <td>${escape(row.status)}</td>
+        <td><pre>${escape(row.comment)}</pre>
+            <details><summary>Проверки: ${row.checks.length}</summary>
+                ${row.checks.map(check => `<p>${escape(check.result)} — ${escape(check.name)}${check.observed ? `: ${escape(check.observed)}` : ''}</p>`).join('\n')}
+                ${row.evidence ? `<img src="${escape(row.evidence)}" alt="Сцена во время проверки">` : ''}
+            </details>
+        </td>
+    </tr>`).join('\n');
+const html = `<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Результаты проверок Galaxy Runner</title>
+    <style>
+        body { margin: 24px; font: 16px system-ui, sans-serif; color: #20334a; background: #f5f7fb; }
+        p { line-height: 1.6; } table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #d7e0e9; text-align: left; vertical-align: top; }
+        th { background: #20334a; color: white; } pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+        img { display: block; max-width: 900px; width: 100%; margin-top: 16px; } summary { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Результаты проверок Galaxy Runner</h1>
+    <p>Дата прогона: ${escape(data.dateMoscow)}. Версия: ${escape(data.build.version)}. Git: ${escape(data.build.commit.slice(0, 7))}.</p>
+    <p><b>${Object.entries(data.counts).map(([status, count]) => `${escape(status)}: ${count}`).join('; ')}.</b>
+       Сценариев: ${data.results.length}; отдельных проверок: ${data.subchecks.length}.</p>
+    <p>Проверяются реальные сцены, физика и сохранения с подготовленными тестовыми состояниями.
+       Результат относится к перечисленным проверкам и не означает полное прохождение игры.
+       Скриншоты предназначены для ручного просмотра; автоматическое сравнение изображений не выполняется.</p>
+    <p>Адрес: ${escape(data.target)}. Браузер: ${escape(data.browser)}.
+       Окно: ${data.viewport.width}×${data.viewport.height}; Canvas: ${data.canvas.width}×${data.canvas.height}.
+       SHA-256 исходников: ${escape(data.build.sourceSha256)}.</p>
+    <p>Браузерные результаты относятся к сохранённому прогону. Настройки TypeScript и зависимости проверены при создании отчёта.</p>
+    <table><thead><tr><th>Сценарий</th><th>Результат</th><th>Подробности</th></tr></thead><tbody>${rows}</tbody></table>
+</body>
+</html>`;
+fs.writeFileSync(`${directory}/requirements.html`, html);
+console.log(JSON.stringify({ scenarios: data.results.length, checks: data.subchecks.length, counts: data.counts }, null, 2));
