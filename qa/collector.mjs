@@ -2,15 +2,66 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-const dir='qa-results';fs.mkdirSync(dir,{recursive:true});
-function files(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(x=>x.isDirectory()?files(path.join(dir,x.name)):[path.join(dir,x.name)]);}
-const sourceHash=crypto.createHash('sha256');for(const p of files('src').filter(p=>/\.(ts|json|css)$/.test(p)).sort()){sourceHash.update(p);sourceHash.update(fs.readFileSync(p));}
-const build={version:JSON.parse(fs.readFileSync('package.json')).version,commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceSha256:sourceHash.digest('hex')};
-http.createServer((req,res)=>{
- res.setHeader('Access-Control-Allow-Origin','http://127.0.0.1:5190');res.setHeader('Access-Control-Allow-Headers','Content-Type');
- if(req.method==='OPTIONS'){res.end();return;}
- if(req.url!=='/results'||req.method!=='POST'){res.writeHead(404);res.end();return;}
- let body='';req.on('data',d=>{body+=d;if(body.length>40_000_000)req.destroy();});
- req.on('end',()=>{try{const r=JSON.parse(body);r.build=build;for(const item of r.results){if(item.image?.startsWith('data:image/png;base64,')&&/^[A-Z0-9-]+$/.test(item.id)){fs.writeFileSync(`${dir}/${item.id}.png`,Buffer.from(item.image.split(',')[1],'base64'));item.evidence=`${item.id}.png`;delete item.image;}}fs.writeFileSync(`${dir}/browser.json`,JSON.stringify(r,null,2));res.end('saved');console.log('Сохранено требований:',r.results.length);}catch(e){res.writeHead(400);res.end(String(e));}});
-}).listen(5191,'127.0.0.1',()=>console.log('Сборщик результатов: 127.0.0.1:5191',build));
+import { execFileSync } from 'node:child_process';
+
+const resultsDirectory = 'qa-results';
+fs.mkdirSync(resultsDirectory, { recursive: true });
+
+function files(directory) {
+    return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+        const filename = path.join(directory, entry.name);
+        return entry.isDirectory() ? files(filename) : [filename];
+    });
+}
+
+// Отпечаток исходников фиксируется при запуске сборщика.
+const sourceHash = crypto.createHash('sha256');
+for (const filename of files('src').filter(name => /\.(ts|json|css)$/.test(name)).sort()) {
+    sourceHash.update(filename);
+    sourceHash.update(fs.readFileSync(filename));
+}
+const build = {
+    version: JSON.parse(fs.readFileSync('package.json', 'utf8')).version,
+    commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    sourceSha256: sourceHash.digest('hex')
+};
+
+http.createServer((request, response) => {
+    response.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5190');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (request.method === 'OPTIONS') {
+        response.end();
+        return;
+    }
+    if (request.url !== '/results' || request.method !== 'POST') {
+        response.writeHead(404);
+        response.end();
+        return;
+    }
+
+    let body = '';
+    request.on('data', chunk => {
+        body += chunk;
+        if (body.length > 40_000_000) request.destroy();
+    });
+    request.on('end', () => {
+        try {
+            const results = JSON.parse(body);
+            results.build = build;
+            for (const item of results.results) {
+                if (!item.image?.startsWith('data:image/png;base64,') || !/^[A-Z0-9-]+$/.test(item.id)) continue;
+                fs.writeFileSync(`${resultsDirectory}/${item.id}.png`, Buffer.from(item.image.split(',')[1], 'base64'));
+                item.evidence = `${item.id}.png`;
+                delete item.image;
+            }
+            fs.writeFileSync(`${resultsDirectory}/browser.json`, JSON.stringify(results, null, 2) + '\n');
+            response.end('saved');
+            console.log('Сохранено сценариев:', results.results.length);
+        } catch (error) {
+            response.writeHead(400);
+            response.end(String(error));
+        }
+    });
+}).listen(5191, '127.0.0.1', () => {
+    console.log('Сборщик результатов: http://127.0.0.1:5191', build);
+});
